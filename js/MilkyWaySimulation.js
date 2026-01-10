@@ -14,6 +14,7 @@ import { sunVertexShader, sunFragmentShader, planetVertexShader, planetFragmentS
 import { detailedPlanetVertexShader, detailedPlanetFragmentShader, atmosphereVertexShader, atmosphereFragmentShader, cloudVertexShader, cloudFragmentShader, detailedRingsVertexShader, detailedRingsFragmentShader } from './shaders/planet-detail-shaders.js?v=3';
 import { supernovaStarVertexShader, supernovaStarFragmentShader, shockwaveVertexShader, shockwaveFragmentShader, debrisVertexShader, debrisFragmentShader, nebulaVertexShader, nebulaFragmentShader, pulsarVertexShader, pulsarFragmentShader, flashVertexShader, flashFragmentShader, coronaVertexShader as supernovaCoronaVertexShader, coronaFragmentShader as supernovaCoronaFragmentShader } from './shaders/supernova-shaders.js?v=3';
 import { AudioManager } from './AudioManager.js?v=3';
+import { SolarSystemDetailed } from './SolarSystemDetailed.js?v=1';
 
 export class MilkyWaySimulation {
     constructor() {
@@ -60,6 +61,10 @@ export class MilkyWaySimulation {
         // Raycaster for planet clicking
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
+
+        // Detailed solar system (textured)
+        this.detailedSolarSystem = null;
+        this.useDetailedSolarSystem = true;
 
         // Andromeda galaxy
         this.andromedaConfig = ANDROMEDA_CONFIG;
@@ -2119,6 +2124,28 @@ export class MilkyWaySimulation {
         this.createSolarSystemMarker();
 
         this.scene.add(this.solarSystem);
+
+        // Initialize detailed solar system asynchronously
+        this.initDetailedSolarSystem();
+    }
+
+    async initDetailedSolarSystem() {
+        try {
+            this.detailedSolarSystem = new SolarSystemDetailed(this.scene, this.camera);
+            await this.detailedSolarSystem.init((progress) => {
+                console.log(`Loading textures: ${Math.round(progress.overallProgress * 100)}%`);
+            });
+            // Position at same location as basic solar system
+            this.detailedSolarSystem.setPosition(
+                this.solarSystemPosition.x,
+                this.solarSystemPosition.y,
+                this.solarSystemPosition.z
+            );
+            console.log('Detailed solar system initialized');
+        } catch (error) {
+            console.error('Failed to initialize detailed solar system:', error);
+            this.useDetailedSolarSystem = false;
+        }
     }
 
     createSun() {
@@ -3099,11 +3126,19 @@ export class MilkyWaySimulation {
 
         // Scale up solar system as we approach
         if (overallProgress > 0.5) {
-            this.solarSystem.visible = true;
             this.solarMarker.visible = false;
             const scaleProgress = (overallProgress - 0.5) / 0.5;
             const scale = 0.001 + ease(scaleProgress) * 0.999;
-            this.solarSystem.scale.setScalar(scale);
+
+            // Use detailed solar system if available
+            if (this.useDetailedSolarSystem && this.detailedSolarSystem && this.detailedSolarSystem.initialized) {
+                this.solarSystem.visible = false; // Hide basic solar system
+                this.detailedSolarSystem.show();
+                this.detailedSolarSystem.setScale(scale);
+            } else {
+                this.solarSystem.visible = true;
+                this.solarSystem.scale.setScalar(scale);
+            }
         }
     }
 
@@ -3209,6 +3244,11 @@ export class MilkyWaySimulation {
         if (this.solarSystem) {
             this.solarSystem.visible = false;
             this.solarSystem.scale.set(0.001, 0.001, 0.001);
+        }
+        // Hide detailed solar system
+        if (this.detailedSolarSystem) {
+            this.detailedSolarSystem.hide();
+            this.detailedSolarSystem.setScale(0.001);
         }
         if (this.solarMarker) {
             this.solarMarker.visible = true;
@@ -3592,6 +3632,11 @@ export class MilkyWaySimulation {
 
         // Update solar system planet orbits
         this.updateSolarSystem();
+
+        // Update detailed solar system if visible
+        if (this.detailedSolarSystem && this.detailedSolarSystem.visible) {
+            this.detailedSolarSystem.update(this.simulationTime, deltaTime);
+        }
 
         // Update planet view if active
         this.updatePlanetView(deltaTime);
