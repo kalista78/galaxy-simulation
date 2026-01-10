@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milky Way Galaxy Simulation</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+    <div id="info">Milky Way Galaxy · ~300,000 stars · Scroll to zoom · Drag to rotate</div>
+
+    <!-- Control Panel -->
+    <div id="controls">
+        <h2 id="controls-header">Galaxy Controls</h2>
+
+        <div class="controls-content">
+            <div class="control-group">
+                <label>Rotation Speed <span class="value" id="speed-val">1.0x</span></label>
+                <input type="range" id="speed" min="0" max="5" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>Star Brightness <span class="value" id="brightness-val">100%</span></label>
+                <input type="range" id="brightness" min="0.2" max="2" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>Bloom Intensity <span class="value" id="bloom-val">0.8</span></label>
+                <input type="range" id="bloom" min="0" max="2" step="0.1" value="0.8">
+            </div>
+
+            <div class="control-group">
+                <label>Core Glow <span class="value" id="core-val">100%</span></label>
+                <input type="range" id="core" min="0" max="2" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>Time Scale <span class="value" id="time-val">1.0x</span></label>
+                <input type="range" id="timescale" min="0.1" max="10" step="0.1" value="1">
+            </div>
+
+            <div class="control-row">
+                <button class="btn active" id="btn-play">Play</button>
+                <button class="btn" id="btn-pause">Pause</button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-autorotate">Auto Rotate</button>
+                <button class="btn" id="btn-reset">Reset View</button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-top">Top View</button>
+                <button class="btn" id="btn-side">Side View</button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-tour" style="background: linear-gradient(135deg, rgba(100,255,200,0.2), rgba(100,150,255,0.1)); border-color: rgba(100,255,200,0.4);">
+                    ✨ Cinematic Tour
+                </button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-solar" style="background: linear-gradient(135deg, rgba(255,200,100,0.2), rgba(100,150,255,0.1)); border-color: rgba(255,200,100,0.4);">
+                    ☀ Solar System
+                </button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-blackhole" style="background: linear-gradient(135deg, rgba(50,0,80,0.3), rgba(255,100,50,0.1)); border-color: rgba(200,100,255,0.4);">
+                    ⚫ Black Hole
+                </button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-merger" style="background: linear-gradient(135deg, rgba(100,50,150,0.3), rgba(50,100,200,0.2)); border-color: rgba(150,100,255,0.5);">
+                    💫 Andromeda Collision
+                </button>
+            </div>
+
+            <div class="control-row">
+                <button class="btn" id="btn-supernova" style="background: linear-gradient(135deg, rgba(255,100,50,0.3), rgba(255,200,100,0.2)); border-color: rgba(255,150,100,0.5);">
+                    💥 Supernova
+                </button>
+            </div>
+
+            <div class="sound-controls">
+                <div class="control-row">
+                    <button class="btn" id="btn-sound" style="background: linear-gradient(135deg, rgba(100,200,255,0.2), rgba(150,100,255,0.1)); border-color: rgba(100,200,255,0.4);">
+                        🔊 Enable Sound
+                    </button>
+                </div>
+                <div class="control-group sound-volume" style="display: none;">
+                    <label>Volume <span class="value" id="volume-val">70%</span></label>
+                    <input type="range" id="volume" min="0" max="100" step="5" value="70">
+                </div>
+            </div>
+
+            <div class="stats">
+                <div>Total Stars: <span class="val">~310,000</span></div>
+                <div>Disk Stars: <span class="val">220,000</span></div>
+                <div>Bulge Stars: <span class="val">50,000</span></div>
+                <div>Halo/GC Stars: <span class="val">15,000</span></div>
+                <div>FPS: <span class="val" id="fps-val">--</span></div>
+                <div>Rotation: <span class="val" id="rotation-val">0°</span></div>
+            </div>
+        </div>
+
+        <div class="compact-buttons">
+            <button class="btn" id="btn-tour-compact" title="Cinematic Tour">✨</button>
+            <button class="btn" id="btn-solar-compact" title="Solar System">☀</button>
+            <button class="btn" id="btn-blackhole-compact" title="Black Hole">⚫</button>
+            <button class="btn" id="btn-merger-compact" title="Andromeda Collision">💫</button>
+            <button class="btn" id="btn-supernova-compact" title="Supernova">💥</button>
+            <button class="btn" id="btn-sound-compact" title="Toggle Sound">🔊</button>
+        </div>
+    </div>
+    <button id="toggle-panel">Show Controls</button>
+
+    <!-- Journey Overlay -->
+    <div id="journey-overlay">
+        <div class="journey-text" id="journey-title">Traveling to the Solar System</div>
+        <div class="journey-subtitle" id="journey-sub">Orion Arm · 26,000 light-years from center</div>
+        <div class="journey-distance" id="journey-dist"></div>
+    </div>
+
+    <!-- Return Button -->
+    <button id="btn-return">↩ Return to Galaxy View</button>
+
+    <!-- Planet Info Overlay -->
+    <div id="planet-overlay">
+        <div class="planet-info">
+            <h3 id="planet-name">Earth</h3>
+            <div class="planet-details">
+                <div class="planet-stat">
+                    <span class="stat-label">Distance from Sun</span>
+                    <span class="stat-value" id="planet-distance">149.6 million km</span>
+                </div>
+                <div class="planet-stat">
+                    <span class="stat-label">Diameter</span>
+                    <span class="stat-value" id="planet-diameter">12,742 km</span>
+                </div>
+                <div class="planet-stat">
+                    <span class="stat-label">Day Length</span>
+                    <span class="stat-value" id="planet-day">24 hours</span>
+                </div>
+                <div class="planet-stat">
+                    <span class="stat-label">Year Length</span>
+                    <span class="stat-value" id="planet-year">365.25 days</span>
+                </div>
+            </div>
+        </div>
+        <button id="btn-exit-planet">↩ Return to Solar System</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { MilkyWaySimulation } from './js/MilkyWaySimulation.js?v=4';
+
+        // Initialize simulation
+        new MilkyWaySimulation();
+    </script>
+</body>
+</html>

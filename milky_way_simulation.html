@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milky Way Galaxy Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Control Panel */
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 10, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 280px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #fff;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #controls h2 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #7db4ff;
+            border-bottom: 1px solid rgba(100, 150, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #7db4ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(125, 180, 255, 0.5);
+        }
+
+        .control-group .value {
+            float: right;
+            font-size: 11px;
+            color: #7db4ff;
+            font-weight: 500;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(100, 150, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 4px;
+            color: #7db4ff;
+            font-size: 11px;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(100, 150, 255, 0.2);
+            border-color: rgba(100, 150, 255, 0.5);
+        }
+
+        .btn.active {
+            background: rgba(100, 150, 255, 0.3);
+            border-color: #7db4ff;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(100, 150, 255, 0.2);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .stats div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .stats span.val {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        #toggle-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 10, 20, 0.85);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: #7db4ff;
+            font-size: 11px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            cursor: pointer;
+            display: none;
+        }
+
+        #controls.hidden {
+            display: none;
+        }
+
+        #controls.hidden + #toggle-panel {
+            display: block;
+        }
+
+        /* Journey Overlay */
+        #journey-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        #journey-overlay.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .journey-text {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0);
+            text-shadow: 0 0 30px rgba(100, 180, 255, 0.8);
+            transition: all 1s ease;
+            text-align: center;
+        }
+
+        .journey-text.visible {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .journey-subtitle {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: rgba(125, 180, 255, 0);
+            margin-top: 10px;
+            transition: all 1s ease 0.3s;
+        }
+
+        .journey-subtitle.visible {
+            color: rgba(125, 180, 255, 0.7);
+        }
+
+        .journey-distance {
+            font-size: 48px;
+            font-weight: 200;
+            color: rgba(255, 200, 100, 0);
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.5s ease;
+        }
+
+        .journey-distance.visible {
+            color: rgba(255, 200, 100, 0.9);
+        }
+
+        /* Solar System Labels */
+        .planet-label {
+            position: absolute;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 1), 0 0 20px rgba(0, 0, 0, 0.8);
+            white-space: nowrap;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .planet-label.visible {
+            opacity: 1;
+        }
+
+        /* Return button */
+        #btn-return {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 30, 0.9);
+            border: 1px solid rgba(100, 150, 255, 0.4);
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: #7db4ff;
+            font-size: 12px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            z-index: 200;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        #btn-return:hover {
+            background: rgba(100, 150, 255, 0.2);
+            border-color: rgba(100, 150, 255, 0.8);
+            box-shadow: 0 0 30px rgba(100, 150, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Milky Way Galaxy · ~300,000 stars · Scroll to zoom · Drag to rotate</div>
+
+    <!-- Control Panel -->
+    <div id="controls">
+        <h2>Galaxy Controls</h2>
+
+        <div class="control-group">
+            <label>Rotation Speed <span class="value" id="speed-val">1.0x</span></label>
+            <input type="range" id="speed" min="0" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>Star Brightness <span class="value" id="brightness-val">100%</span></label>
+            <input type="range" id="brightness" min="0.2" max="2" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>Bloom Intensity <span class="value" id="bloom-val">0.8</span></label>
+            <input type="range" id="bloom" min="0" max="2" step="0.1" value="0.8">
+        </div>
+
+        <div class="control-group">
+            <label>Core Glow <span class="value" id="core-val">100%</span></label>
+            <input type="range" id="core" min="0" max="2" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>Time Scale <span class="value" id="time-val">1.0x</span></label>
+            <input type="range" id="timescale" min="0.1" max="10" step="0.1" value="1">
+        </div>
+
+        <div class="control-row">
+            <button class="btn active" id="btn-play">Play</button>
+            <button class="btn" id="btn-pause">Pause</button>
+        </div>
+
+        <div class="control-row">
+            <button class="btn" id="btn-autorotate">Auto Rotate</button>
+            <button class="btn" id="btn-reset">Reset View</button>
+        </div>
+
+        <div class="control-row">
+            <button class="btn" id="btn-top">Top View</button>
+            <button class="btn" id="btn-side">Side View</button>
+        </div>
+
+        <div class="control-row">
+            <button class="btn" id="btn-solar" style="background: linear-gradient(135deg, rgba(255,200,100,0.2), rgba(100,150,255,0.1)); border-color: rgba(255,200,100,0.4);">
+                ☀ Visit Solar System
+            </button>
+        </div>
+
+        <div class="control-row">
+            <button class="btn" id="btn-blackhole" style="background: linear-gradient(135deg, rgba(50,0,80,0.3), rgba(255,100,50,0.1)); border-color: rgba(200,100,255,0.4);">
+                ⚫ View Black Hole
+            </button>
+        </div>
+
+        <div class="stats">
+            <div>Total Stars: <span class="val">~310,000</span></div>
+            <div>Disk Stars: <span class="val">220,000</span></div>
+            <div>Bulge Stars: <span class="val">50,000</span></div>
+            <div>Halo/GC Stars: <span class="val">15,000</span></div>
+            <div>FPS: <span class="val" id="fps-val">--</span></div>
+            <div>Rotation: <span class="val" id="rotation-val">0°</span></div>
+        </div>
+    </div>
+    <button id="toggle-panel">Show Controls</button>
+
+    <!-- Journey Overlay -->
+    <div id="journey-overlay">
+        <div class="journey-text" id="journey-title">Traveling to the Solar System</div>
+        <div class="journey-subtitle" id="journey-sub">Orion Arm · 26,000 light-years from center</div>
+        <div class="journey-distance" id="journey-dist"></div>
+    </div>
+
+    <!-- Return Button -->
+    <button id="btn-return">↩ Return to Galaxy View</button>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+        // ============================================================
+        // ASTROPHYSICAL CONSTANTS (in arbitrary units, scaled for visualization)
+        // Real Milky Way: ~100,000-180,000 light-years diameter
+        // We use 1 unit = ~500 light-years for practical visualization
+        // ============================================================
+        const GALAXY_CONFIG = {
+            // Structural parameters
+            diskRadius: 180,              // ~90,000 light-years radius
+            bulgeRadius: 20,              // ~10,000 light-years
+            diskThickness: 2,             // Thin disk ~1,000 light-years
+            thickDiskThickness: 6,        // Thick disk ~3,000 light-years
+            barLength: 54,                // ~27,000 light-years
+            barWidth: 12,
+            
+            // Spiral arm parameters (logarithmic spiral: r = a * e^(b*θ))
+            spiralArms: 4,
+            spiralTightness: 0.22,        // Controls how tightly wound (pitch angle ~12-15°)
+            armWidth: 18,                 // Width of spiral arms
+            
+            // Particle counts
+            diskStars: 220000,            // Main disk population
+            bulgeStars: 50000,            // Central bulge
+            haloStars: 15000,             // Halo and globular clusters
+            dustParticles: 25000,         // Dark dust lanes
+            
+            // Rotation (differential rotation - Keplerian-like)
+            baseRotationSpeed: 0.15,   // Base angular velocity (increased for visible rotation)
+            
+            // Star spectral type distribution (realistic ratios)
+            spectralDistribution: {
+                M: 0.76,    // Red dwarfs (most common)
+                K: 0.12,    // Orange
+                G: 0.075,   // Yellow (Sun-like)
+                F: 0.03,    // Yellow-white
+                A: 0.006,   // White
+                B: 0.0013,  // Blue-white
+                O: 0.00003  // Blue giants (rarest)
+            }
+        };
+
+        // Spectral type to color temperature mapping
+        const SPECTRAL_COLORS = {
+            O: new THREE.Color(0.6, 0.7, 1.0),      // >30,000K - Blue
+            B: new THREE.Color(0.7, 0.8, 1.0),      // 10,000-30,000K - Blue-white
+            A: new THREE.Color(0.9, 0.9, 1.0),      // 7,500-10,000K - White
+            F: new THREE.Color(1.0, 1.0, 0.9),      // 6,000-7,500K - Yellow-white
+            G: new THREE.Color(1.0, 0.95, 0.8),     // 5,200-6,000K - Yellow
+            K: new THREE.Color(1.0, 0.8, 0.6),      // 3,700-5,200K - Orange
+            M: new THREE.Color(1.0, 0.6, 0.4)       // <3,700K - Red
+        };
+
+        // ============================================================
+        // CUSTOM SHADERS
+        // ============================================================
+        
+        // Star particle vertex shader
+        const starVertexShader = `
+            attribute float size;
+            attribute vec3 customColor;
+            attribute float brightness;
+            attribute float rotationSpeed;
+            attribute float initialAngle;
+            attribute float distanceFromCenter;
+            
+            varying vec3 vColor;
+            varying float vBrightness;
+            
+            uniform float time;
+            uniform float globalBrightness;
+            uniform float speedMultiplier;
+
+            void main() {
+                vColor = customColor;
+                vBrightness = brightness * globalBrightness;
+
+                // Differential rotation: inner stars rotate faster (Keplerian)
+                // ω ∝ r^(-1.5) for Keplerian, but we use a softer falloff for visual effect
+                float angularVelocity = rotationSpeed * speedMultiplier / (1.0 + pow(distanceFromCenter * 0.02, 0.5));
+                float currentAngle = initialAngle + time * angularVelocity;
+                
+                // Apply rotation around Y-axis (galactic pole)
+                float cosA = cos(currentAngle);
+                float sinA = sin(currentAngle);
+                vec3 rotatedPosition = vec3(
+                    position.x * cosA - position.z * sinA,
+                    position.y,
+                    position.x * sinA + position.z * cosA
+                );
+                
+                vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
+                
+                // Size attenuation with distance
+                float sizeAtten = size * (300.0 / -mvPosition.z);
+                gl_PointSize = clamp(sizeAtten, 0.5, 50.0);
+                
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+        
+        // Star particle fragment shader with Gaussian falloff
+        const starFragmentShader = `
+            varying vec3 vColor;
+            varying float vBrightness;
+            
+            void main() {
+                // Calculate distance from center of point sprite
+                vec2 center = gl_PointCoord - vec2(0.5);
+                float dist = length(center);
+                
+                // Gaussian falloff for natural star appearance
+                float intensity = exp(-dist * dist * 8.0);
+                
+                // Add bright core
+                float core = exp(-dist * dist * 32.0) * 0.5;
+                intensity += core;
+                
+                // Apply color and brightness
+                vec3 finalColor = vColor * vBrightness * intensity;
+                
+                // Add slight bloom halo for brighter stars
+                float halo = exp(-dist * dist * 2.0) * vBrightness * 0.1;
+                finalColor += vColor * halo;
+                
+                // Discard nearly transparent pixels
+                if (intensity < 0.01) discard;
+                
+                gl_FragColor = vec4(finalColor, intensity * vBrightness);
+            }
+        `;
+
+        // Dust lane vertex shader
+        const dustVertexShader = `
+            attribute float size;
+            attribute float opacity;
+            attribute float rotationSpeed;
+            attribute float initialAngle;
+            attribute float distanceFromCenter;
+            
+            varying float vOpacity;
+
+            uniform float time;
+            uniform float speedMultiplier;
+
+            void main() {
+                vOpacity = opacity;
+
+                // Same differential rotation as stars
+                float angularVelocity = rotationSpeed * speedMultiplier / (1.0 + pow(distanceFromCenter * 0.02, 0.5));
+                float currentAngle = initialAngle + time * angularVelocity;
+                
+                float cosA = cos(currentAngle);
+                float sinA = sin(currentAngle);
+                vec3 rotatedPosition = vec3(
+                    position.x * cosA - position.z * sinA,
+                    position.y,
+                    position.x * sinA + position.z * cosA
+                );
+                
+                vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
+                gl_PointSize = size * (200.0 / -mvPosition.z);
+                gl_PointSize = clamp(gl_PointSize, 1.0, 40.0);
+                
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+        
+        // Dust lane fragment shader (absorption effect)
+        const dustFragmentShader = `
+            varying float vOpacity;
+            
+            void main() {
+                vec2 center = gl_PointCoord - vec2(0.5);
+                float dist = length(center);
+                
+                // Soft circular falloff
+                float alpha = smoothstep(0.5, 0.0, dist) * vOpacity;
+                
+                if (alpha < 0.01) discard;
+                
+                // Dark brown/black dust color
+                gl_FragColor = vec4(0.02, 0.01, 0.005, alpha);
+            }
+        `;
+
+        // Core glow vertex shader
+        const coreVertexShader = `
+            varying vec3 vPosition;
+            
+            void main() {
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+        
+        // Core glow fragment shader with volumetric effect
+        const coreFragmentShader = `
+            varying vec3 vPosition;
+            uniform float time;
+            uniform float coreGlow;
+
+            void main() {
+                float dist = length(vPosition);
+
+                // Multiple layers of glow for volumetric effect
+                float glow1 = exp(-dist * 0.15) * 0.8;
+                float glow2 = exp(-dist * 0.08) * 0.4;
+                float glow3 = exp(-dist * 0.04) * 0.2;
+
+                float totalGlow = (glow1 + glow2 + glow3) * coreGlow;
+
+                // Warm golden-white core color gradient
+                vec3 innerColor = vec3(1.0, 0.98, 0.9);    // White-gold
+                vec3 midColor = vec3(1.0, 0.85, 0.5);      // Golden
+                vec3 outerColor = vec3(0.8, 0.5, 0.2);     // Orange-brown
+
+                float t = smoothstep(0.0, 30.0, dist);
+                vec3 color = mix(innerColor, midColor, t);
+                color = mix(color, outerColor, smoothstep(10.0, 50.0, dist));
+
+                // Subtle pulsing
+                float pulse = 1.0 + sin(time * 0.5) * 0.02;
+
+                gl_FragColor = vec4(color * totalGlow * pulse, totalGlow);
+            }
+        `;
+
+        // Enhanced Sagittarius A* black hole shader
+        const blackHoleVertexShader = `
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const blackHoleFragmentShader = `
+            varying vec2 vUv;
+            uniform float time;
+
+            #define PI 3.14159265359
+
+            // Noise function for turbulence
+            float hash(vec2 p) {
+                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+            }
+
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
+                return mix(
+                    mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+                    f.y
+                );
+            }
+
+            float fbm(vec2 p) {
+                float f = 0.0;
+                f += 0.5 * noise(p); p *= 2.02;
+                f += 0.25 * noise(p); p *= 2.03;
+                f += 0.125 * noise(p); p *= 2.01;
+                f += 0.0625 * noise(p);
+                return f / 0.9375;
+            }
+
+            void main() {
+                vec2 center = vUv - 0.5;
+                float dist = length(center);
+                float angle = atan(center.y, center.x);
+
+                // Schwarzschild radius (event horizon)
+                float rs = 0.08;
+                float photonSphereR = rs * 1.5;
+                float iscoR = rs * 3.0; // Innermost stable circular orbit
+
+                // Event horizon - absolute black
+                float eventHorizon = smoothstep(rs, rs * 0.85, dist);
+
+                // Photon sphere - intense gravitationally lensed light
+                float photonGlow = exp(-pow((dist - photonSphereR) * 25.0, 2.0)) * 1.2;
+
+                // Einstein ring effect
+                float einsteinRing = exp(-pow((dist - rs * 1.2) * 50.0, 2.0)) * 0.8;
+
+                // Accretion disk with rotation
+                float diskAngle = angle + time * 0.3;
+                float diskR = dist;
+
+                // Disk is thinner when viewed edge-on
+                float diskThickness = 0.15 * (1.0 - smoothstep(iscoR, rs * 6.0, dist));
+                float diskProfile = exp(-pow(center.y / (diskThickness + 0.01), 2.0));
+
+                // Spiral structure in accretion disk
+                float spiral = sin(diskAngle * 3.0 - dist * 20.0 + time * 2.0) * 0.5 + 0.5;
+                float turbulence = fbm(vec2(diskAngle * 2.0, dist * 10.0) + time * 0.5);
+
+                // Disk intensity - brighter closer to black hole (but outside ISCO)
+                float diskIntensity = smoothstep(rs * 1.1, iscoR, dist) *
+                                      smoothstep(rs * 8.0, iscoR, dist) *
+                                      diskProfile;
+                diskIntensity *= (0.6 + spiral * 0.3 + turbulence * 0.2);
+
+                // Doppler beaming - one side brighter due to relativistic motion
+                float doppler = 1.0 + 0.4 * sin(diskAngle + PI * 0.5);
+                diskIntensity *= doppler;
+
+                // Gravitational redshift - light closer to BH is redder
+                float redshift = smoothstep(rs, rs * 4.0, dist);
+
+                // Color composition
+                vec3 photonColor = vec3(1.0, 0.95, 0.9); // Nearly white
+                vec3 hotDiskColor = vec3(1.0, 0.7, 0.3); // Hot inner disk - orange
+                vec3 warmDiskColor = vec3(1.0, 0.5, 0.2); // Warm disk
+                vec3 coolDiskColor = vec3(0.8, 0.3, 0.1); // Cooler outer disk
+
+                // Temperature gradient in disk
+                vec3 diskColor = mix(hotDiskColor, coolDiskColor, smoothstep(iscoR, rs * 5.0, dist));
+                diskColor = mix(warmDiskColor, diskColor, redshift);
+
+                // Combine all elements
+                vec3 color = vec3(0.0);
+
+                // Photon sphere glow
+                color += photonColor * photonGlow;
+
+                // Einstein ring
+                color += vec3(0.9, 0.95, 1.0) * einsteinRing;
+
+                // Accretion disk
+                color += diskColor * diskIntensity * 1.5;
+
+                // Subtle outer glow
+                float outerGlow = exp(-dist * 3.0) * 0.15;
+                color += vec3(1.0, 0.6, 0.3) * outerGlow;
+
+                // Apply event horizon mask
+                color *= (1.0 - eventHorizon);
+
+                // Alpha calculation
+                float alpha = max(max(photonGlow, diskIntensity), einsteinRing);
+                alpha = max(alpha, outerGlow);
+                alpha = max(alpha, eventHorizon);
+                alpha = clamp(alpha, 0.0, 1.0);
+
+                // Pure black center
+                if (eventHorizon > 0.9) {
+                    color = vec3(0.0);
+                    alpha = 1.0;
+                }
+
+                gl_FragColor = vec4(color, alpha);
+            }
+        `;
+
+        // Accretion disk particle shader
+        const accretionVertexShader = `
+            attribute float size;
+            attribute float orbitRadius;
+            attribute float orbitSpeed;
+            attribute float orbitPhase;
+            attribute float particleTemp;
+
+            varying float vTemp;
+            varying float vAlpha;
+
+            uniform float time;
+
+            void main() {
+                vTemp = particleTemp;
+
+                // Keplerian orbit - closer particles move faster
+                float angle = orbitPhase + time * orbitSpeed;
+
+                // Slight vertical oscillation
+                float vertOsc = sin(angle * 3.0 + orbitPhase * 5.0) * 0.02 * orbitRadius;
+
+                vec3 pos = vec3(
+                    cos(angle) * orbitRadius,
+                    vertOsc,
+                    sin(angle) * orbitRadius
+                );
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+
+                // Size attenuation
+                gl_PointSize = size * (100.0 / -mvPosition.z);
+                gl_PointSize = clamp(gl_PointSize, 1.0, 20.0);
+
+                // Fade out at edges
+                vAlpha = smoothstep(0.5, 3.0, orbitRadius) * smoothstep(8.0, 5.0, orbitRadius);
+
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+        const accretionFragmentShader = `
+            varying float vTemp;
+            varying float vAlpha;
+
+            void main() {
+                vec2 center = gl_PointCoord - 0.5;
+                float dist = length(center);
+
+                // Soft particle
+                float intensity = exp(-dist * dist * 8.0);
+
+                // Temperature-based color (black body radiation)
+                vec3 hotColor = vec3(1.0, 0.9, 0.7);
+                vec3 warmColor = vec3(1.0, 0.6, 0.2);
+                vec3 coolColor = vec3(0.8, 0.3, 0.1);
+
+                vec3 color = mix(coolColor, warmColor, vTemp);
+                color = mix(color, hotColor, vTemp * vTemp);
+
+                if (intensity < 0.01) discard;
+
+                gl_FragColor = vec4(color * intensity * 2.0, intensity * vAlpha);
+            }
+        `;
+
+        // Solar System shaders
+        const sunVertexShader = `
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const sunFragmentShader = `
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+            uniform float time;
+
+            // Noise functions for solar surface
+            float hash(vec3 p) {
+                return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+            }
+
+            float noise3D(vec3 p) {
+                vec3 i = floor(p);
+                vec3 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
+
+                return mix(
+                    mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x),
+                        mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+                    mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
+                        mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y),
+                    f.z
+                );
+            }
+
+            float fbm3D(vec3 p) {
+                float f = 0.0;
+                f += 0.5 * noise3D(p); p *= 2.02;
+                f += 0.25 * noise3D(p); p *= 2.03;
+                f += 0.125 * noise3D(p); p *= 2.01;
+                f += 0.0625 * noise3D(p);
+                return f / 0.9375;
+            }
+
+            void main() {
+                vec3 pos = normalize(vPosition);
+
+                // Animated solar surface
+                float n = fbm3D(pos * 5.0 + time * 0.1);
+                float n2 = fbm3D(pos * 10.0 - time * 0.15);
+
+                // Solar granulation
+                float granules = fbm3D(pos * 20.0 + time * 0.05) * 0.3;
+
+                // Sunspots (darker regions)
+                float spots = smoothstep(0.6, 0.7, fbm3D(pos * 3.0 + time * 0.02));
+
+                // Base solar colors
+                vec3 coreColor = vec3(1.0, 1.0, 0.9);
+                vec3 surfaceColor = vec3(1.0, 0.85, 0.4);
+                vec3 limbColor = vec3(1.0, 0.5, 0.2);
+                vec3 spotColor = vec3(0.6, 0.3, 0.1);
+
+                // Limb darkening
+                float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 1.5);
+
+                vec3 color = mix(surfaceColor, coreColor, n * 0.5);
+                color = mix(color, limbColor, fresnel * 0.6);
+                color += granules * vec3(0.2, 0.1, 0.0);
+                color = mix(color, spotColor, spots * 0.5);
+
+                // Emission intensity
+                float intensity = 1.2 + n2 * 0.3;
+
+                gl_FragColor = vec4(color * intensity, 1.0);
+            }
+        `;
+
+        // Planet shader
+        const planetVertexShader = `
+            varying vec3 vNormal;
+            varying vec2 vUv;
+
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const planetFragmentShader = `
+            varying vec3 vNormal;
+            varying vec2 vUv;
+            uniform vec3 planetColor;
+            uniform vec3 planetColor2;
+            uniform float hasRings;
+            uniform float hasAtmosphere;
+            uniform float time;
+
+            void main() {
+                // Basic lighting
+                vec3 lightDir = normalize(vec3(-1.0, 0.3, 0.5));
+                float diff = max(dot(vNormal, lightDir), 0.0);
+                float ambient = 0.15;
+
+                // Color variation based on latitude
+                float lat = vUv.y;
+                vec3 color = mix(planetColor, planetColor2, sin(lat * 3.14159 * 4.0) * 0.5 + 0.5);
+
+                // Atmosphere glow
+                if (hasAtmosphere > 0.5) {
+                    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+                    color += vec3(0.3, 0.5, 1.0) * fresnel * 0.4;
+                }
+
+                // Apply lighting
+                color *= (ambient + diff * 0.85);
+
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        // Saturn rings shader
+        const ringsVertexShader = `
+            varying vec2 vUv;
+
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const ringsFragmentShader = `
+            varying vec2 vUv;
+
+            void main() {
+                vec2 center = vUv - 0.5;
+                float dist = length(center) * 2.0;
+
+                // Ring structure
+                float ring1 = smoothstep(0.4, 0.42, dist) * smoothstep(0.65, 0.63, dist);
+                float ring2 = smoothstep(0.68, 0.7, dist) * smoothstep(0.85, 0.83, dist);
+                float ring3 = smoothstep(0.87, 0.88, dist) * smoothstep(0.95, 0.94, dist);
+
+                // Cassini Division
+                float cassini = 1.0 - smoothstep(0.62, 0.64, dist) * smoothstep(0.7, 0.68, dist) * 0.8;
+
+                float rings = (ring1 + ring2 * 0.7 + ring3 * 0.5) * cassini;
+
+                // Color variation
+                vec3 ringColor = mix(vec3(0.85, 0.75, 0.6), vec3(0.7, 0.65, 0.55), dist);
+
+                // Density variation
+                float density = 0.6 + sin(dist * 100.0) * 0.2;
+
+                if (rings < 0.1) discard;
+
+                gl_FragColor = vec4(ringColor, rings * density * 0.8);
+            }
+        `;
+
+        // ============================================================
+        // UTILITY FUNCTIONS
+        // ============================================================
+        
+        // Seeded random number generator for reproducibility
+        function seededRandom(seed) {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+        
+        // Gaussian random using Box-Muller transform
+        function gaussianRandom(mean = 0, stdev = 1, seed = null) {
+            const u1 = seed !== null ? seededRandom(seed) : Math.random();
+            const u2 = seed !== null ? seededRandom(seed + 0.5) : Math.random();
+            const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            return z0 * stdev + mean;
+        }
+        
+        // Logarithmic spiral: r = a * e^(b*θ)
+        function logarithmicSpiral(theta, a, b) {
+            return a * Math.exp(b * theta);
+        }
+        
+        // Get spectral type based on probability distribution
+        function getSpectralType(rand) {
+            const dist = GALAXY_CONFIG.spectralDistribution;
+            let cumulative = 0;
+            
+            for (const [type, prob] of Object.entries(dist)) {
+                cumulative += prob;
+                if (rand < cumulative) return type;
+            }
+            return 'M'; // Default to most common
+        }
+        
+        // Density falloff function for bulge (de Vaucouleurs profile)
+        function bulgeDensity(r, effectiveRadius) {
+            // I(r) = I_e * exp(-7.67 * ((r/r_e)^(1/4) - 1))
+            const x = Math.pow(r / effectiveRadius, 0.25);
+            return Math.exp(-7.67 * (x - 1));
+        }
+        
+        // Exponential disk density profile
+        function diskDensity(r, scaleLength) {
+            // Σ(r) = Σ_0 * exp(-r/h)
+            return Math.exp(-r / scaleLength);
+        }
+
+        // ============================================================
+        // MAIN APPLICATION
+        // ============================================================
+        
+        class MilkyWaySimulation {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.clock = new THREE.Clock();
+                this.uniforms = {
+                    time: { value: 0 },
+                    globalBrightness: { value: 1.0 },
+                    speedMultiplier: { value: 1.0 },
+                    coreGlow: { value: 1.0 }
+                };
+
+                // Simulation state
+                this.isPaused = false;
+                this.timeScale = 1.0;
+                this.speedMultiplier = 1.0;
+                this.simulationTime = 0;
+                this.lastFrameTime = performance.now();
+                this.frameCount = 0;
+                this.fpsUpdateTime = 0;
+                
+                this.init();
+                this.createGalaxy();
+                this.setupPostProcessing();
+                this.setupControls();
+                this.animate();
+            }
+            
+            init() {
+                // Renderer with logarithmic depth buffer
+                this.renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    alpha: true,
+                    logarithmicDepthBuffer: true
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.setClearColor(0x000000, 1);
+                this.renderer.sortObjects = true;
+                document.body.appendChild(this.renderer.domElement);
+                
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    60,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    10000
+                );
+                this.camera.position.set(0, 150, 250);
+                
+                // Controls
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.minDistance = 30;
+                this.controls.maxDistance = 800;
+                this.controls.autoRotate = false;
+                this.controls.autoRotateSpeed = 0.2;
+                
+                // Resize handler
+                window.addEventListener('resize', () => this.onResize());
+            }
+            
+            createGalaxy() {
+                // Create all galaxy components
+                this.createBackgroundStars();
+                this.createGalacticCore();
+                this.createBlackHole();
+                this.createDiskStars();
+                this.createBulgeStars();
+                this.createHaloAndGlobularClusters();
+                this.createDustLanes();
+                this.createSolarSystem();
+                this.initCinematicSystem();
+            }
+            
+            createBackgroundStars() {
+                // Distant background stars/galaxies for depth
+                const geometry = new THREE.BufferGeometry();
+                const count = 5000;
+                
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+                const sizes = new Float32Array(count);
+                
+                for (let i = 0; i < count; i++) {
+                    // Distribute on a large sphere
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const r = 800 + Math.random() * 500;
+                    
+                    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = r * Math.cos(phi);
+                    
+                    // Faint white/blue colors
+                    const brightness = 0.3 + Math.random() * 0.4;
+                    colors[i * 3] = brightness * (0.8 + Math.random() * 0.2);
+                    colors[i * 3 + 1] = brightness * (0.85 + Math.random() * 0.15);
+                    colors[i * 3 + 2] = brightness;
+                    
+                    sizes[i] = 0.5 + Math.random() * 1.5;
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('brightness', new THREE.BufferAttribute(new Float32Array(count).fill(0.5), 1));
+                geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(new Float32Array(count).fill(0), 1));
+                geometry.setAttribute('initialAngle', new THREE.BufferAttribute(new Float32Array(count).fill(0), 1));
+                geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(new Float32Array(count).fill(1000), 1));
+                
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        globalBrightness: this.uniforms.globalBrightness,
+                        speedMultiplier: this.uniforms.speedMultiplier
+                    },
+                    vertexShader: starVertexShader,
+                    fragmentShader: starFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const stars = new THREE.Points(geometry, material);
+                this.scene.add(stars);
+            }
+
+            createGalacticCore() {
+                // Volumetric core glow using a sphere with custom shader
+                const geometry = new THREE.SphereGeometry(40, 64, 64);
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        coreGlow: this.uniforms.coreGlow
+                    },
+                    vertexShader: coreVertexShader,
+                    fragmentShader: coreFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.BackSide
+                });
+
+                const core = new THREE.Mesh(geometry, material);
+                this.scene.add(core);
+
+                // Additional inner glow layer
+                const innerGeometry = new THREE.SphereGeometry(20, 32, 32);
+                const innerMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        coreGlow: this.uniforms.coreGlow
+                    },
+                    vertexShader: coreVertexShader,
+                    fragmentShader: coreFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.FrontSide
+                });
+
+                const innerCore = new THREE.Mesh(innerGeometry, innerMaterial);
+                this.scene.add(innerCore);
+            }
+            
+            createBlackHole() {
+                // Create black hole group
+                this.blackHoleGroup = new THREE.Group();
+
+                // Main black hole with enhanced shader (billboard)
+                const bhGeometry = new THREE.PlaneGeometry(15, 15);
+                const bhMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time
+                    },
+                    vertexShader: blackHoleVertexShader,
+                    fragmentShader: blackHoleFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                });
+
+                const blackHolePlane = new THREE.Mesh(bhGeometry, bhMaterial);
+                this.blackHolePlane = blackHolePlane;
+                this.blackHoleGroup.add(blackHolePlane);
+
+                // Create 3D accretion disk with particles
+                this.createAccretionDisk();
+
+                // Add the event horizon sphere (pure black)
+                const eventHorizonGeo = new THREE.SphereGeometry(0.8, 32, 32);
+                const eventHorizonMat = new THREE.MeshBasicMaterial({
+                    color: 0x000000,
+                    transparent: false
+                });
+                const eventHorizon = new THREE.Mesh(eventHorizonGeo, eventHorizonMat);
+                this.blackHoleGroup.add(eventHorizon);
+
+                this.scene.add(this.blackHoleGroup);
+            }
+
+            createAccretionDisk() {
+                // Particle-based accretion disk
+                const particleCount = 8000;
+                const geometry = new THREE.BufferGeometry();
+
+                const positions = new Float32Array(particleCount * 3);
+                const sizes = new Float32Array(particleCount);
+                const orbitRadii = new Float32Array(particleCount);
+                const orbitSpeeds = new Float32Array(particleCount);
+                const orbitPhases = new Float32Array(particleCount);
+                const temps = new Float32Array(particleCount);
+
+                for (let i = 0; i < particleCount; i++) {
+                    // Distribute particles in disk
+                    const r = 1.5 + Math.pow(Math.random(), 0.7) * 6;
+                    const theta = Math.random() * Math.PI * 2;
+
+                    positions[i * 3] = Math.cos(theta) * r;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 0.3 * (1 - r / 8);
+                    positions[i * 3 + 2] = Math.sin(theta) * r;
+
+                    sizes[i] = 0.5 + Math.random() * 1.5;
+                    orbitRadii[i] = r;
+                    // Keplerian: v ∝ r^(-0.5)
+                    orbitSpeeds[i] = 0.8 / Math.sqrt(r);
+                    orbitPhases[i] = theta;
+                    // Temperature decreases with radius
+                    temps[i] = 1.0 - (r - 1.5) / 6;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('orbitRadius', new THREE.BufferAttribute(orbitRadii, 1));
+                geometry.setAttribute('orbitSpeed', new THREE.BufferAttribute(orbitSpeeds, 1));
+                geometry.setAttribute('orbitPhase', new THREE.BufferAttribute(orbitPhases, 1));
+                geometry.setAttribute('particleTemp', new THREE.BufferAttribute(temps, 1));
+
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time
+                    },
+                    vertexShader: accretionVertexShader,
+                    fragmentShader: accretionFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const accretionDisk = new THREE.Points(geometry, material);
+                accretionDisk.rotation.x = Math.PI * 0.15; // Slight tilt
+                this.blackHoleGroup.add(accretionDisk);
+            }
+            
+            createDiskStars() {
+                // Main disk population with spiral arms
+                const count = GALAXY_CONFIG.diskStars;
+                const geometry = new THREE.BufferGeometry();
+                
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+                const sizes = new Float32Array(count);
+                const brightness = new Float32Array(count);
+                const rotationSpeeds = new Float32Array(count);
+                const initialAngles = new Float32Array(count);
+                const distances = new Float32Array(count);
+                
+                // Spiral arm base angles (4 arms, evenly spaced)
+                const armAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
+                const armNames = ['Perseus', 'Sagittarius', 'Scutum-Centaurus', 'Norma-Outer'];
+                
+                for (let i = 0; i < count; i++) {
+                    // Determine if star is in an arm or inter-arm region
+                    const inArm = Math.random() < 0.65; // 65% in arms
+                    
+                    let x, y, z, r, theta;
+                    
+                    if (inArm) {
+                        // Place star along a spiral arm
+                        const armIndex = Math.floor(Math.random() * 4);
+                        const baseAngle = armAngles[armIndex];
+                        
+                        // Radial position along arm
+                        r = 8 + Math.random() * (GALAXY_CONFIG.diskRadius - 8);
+                        
+                        // Logarithmic spiral equation
+                        // θ = (1/b) * ln(r/a)
+                        const spiralAngle = Math.log(r / 8) / GALAXY_CONFIG.spiralTightness;
+                        theta = baseAngle + spiralAngle;
+                        
+                        // Add spread around arm center
+                        const armSpread = GALAXY_CONFIG.armWidth * (0.5 + 0.5 * Math.random());
+                        const spreadAngle = gaussianRandom(0, armSpread / r);
+                        theta += spreadAngle;
+                        
+                        // Small radial perturbation
+                        r += gaussianRandom(0, 3);
+                        
+                    } else {
+                        // Inter-arm disk stars (more uniform distribution)
+                        r = 5 + Math.pow(Math.random(), 0.5) * GALAXY_CONFIG.diskRadius;
+                        theta = Math.random() * Math.PI * 2;
+                    }
+                    
+                    // Apply exponential disk density falloff (reject sampling)
+                    const densityThreshold = diskDensity(r, GALAXY_CONFIG.diskRadius / 3);
+                    if (Math.random() > densityThreshold && r > 30) {
+                        // Redistribute rejected stars to inner regions
+                        r = 5 + Math.random() * 50;
+                    }
+                    
+                    // Height above/below disk plane (thin + thick disk components)
+                    const isThinDisk = Math.random() < 0.8;
+                    const scaleHeight = isThinDisk ? 
+                        GALAXY_CONFIG.diskThickness : 
+                        GALAXY_CONFIG.thickDiskThickness;
+                    y = gaussianRandom(0, scaleHeight * (1 - r / GALAXY_CONFIG.diskRadius * 0.5));
+                    
+                    // Central bar modification
+                    if (r < GALAXY_CONFIG.barLength / 2) {
+                        const barAngle = 0.45; // Bar orientation ~25 degrees
+                        const barFactor = 1 - r / (GALAXY_CONFIG.barLength / 2);
+                        
+                        // Elongate distribution along bar axis
+                        const cosBar = Math.cos(barAngle);
+                        const sinBar = Math.sin(barAngle);
+                        
+                        // Project position
+                        const xTemp = r * Math.cos(theta);
+                        const zTemp = r * Math.sin(theta);
+                        
+                        // Compress perpendicular to bar
+                        const alongBar = xTemp * cosBar + zTemp * sinBar;
+                        const perpBar = -xTemp * sinBar + zTemp * cosBar;
+                        
+                        x = alongBar * cosBar - perpBar * sinBar * (1 - barFactor * 0.6);
+                        z = alongBar * sinBar + perpBar * cosBar * (1 - barFactor * 0.6);
+                    } else {
+                        x = r * Math.cos(theta);
+                        z = r * Math.sin(theta);
+                    }
+                    
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = z;
+                    
+                    // Spectral type and color
+                    const spectralType = getSpectralType(Math.random());
+                    const starColor = SPECTRAL_COLORS[spectralType];
+                    
+                    // Add slight color variation
+                    const colorVar = 0.9 + Math.random() * 0.2;
+                    colors[i * 3] = starColor.r * colorVar;
+                    colors[i * 3 + 1] = starColor.g * colorVar;
+                    colors[i * 3 + 2] = starColor.b * colorVar;
+                    
+                    // Size based on spectral type (hotter = larger visual)
+                    const spectralSizes = { O: 4.0, B: 3.5, A: 2.5, F: 2.0, G: 1.8, K: 1.5, M: 1.2 };
+                    sizes[i] = spectralSizes[spectralType] * (0.7 + Math.random() * 0.6);
+                    
+                    // Brightness based on spectral type
+                    const spectralBright = { O: 2.0, B: 1.5, A: 1.2, F: 1.0, G: 0.9, K: 0.7, M: 0.5 };
+                    brightness[i] = spectralBright[spectralType] * (0.6 + Math.random() * 0.4);
+                    
+                    // Boost brightness for arm stars
+                    if (inArm) brightness[i] *= 1.3;
+                    
+                    // Rotation parameters
+                    const dist = Math.sqrt(x * x + z * z);
+                    distances[i] = dist;
+                    initialAngles[i] = Math.atan2(z, x);
+                    rotationSpeeds[i] = GALAXY_CONFIG.baseRotationSpeed * (0.8 + Math.random() * 0.4);
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('brightness', new THREE.BufferAttribute(brightness, 1));
+                geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(rotationSpeeds, 1));
+                geometry.setAttribute('initialAngle', new THREE.BufferAttribute(initialAngles, 1));
+                geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(distances, 1));
+                
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        globalBrightness: this.uniforms.globalBrightness,
+                        speedMultiplier: this.uniforms.speedMultiplier
+                    },
+                    vertexShader: starVertexShader,
+                    fragmentShader: starFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const stars = new THREE.Points(geometry, material);
+                this.scene.add(stars);
+            }
+
+            createBulgeStars() {
+                // Central bulge with de Vaucouleurs profile
+                const count = GALAXY_CONFIG.bulgeStars;
+                const geometry = new THREE.BufferGeometry();
+                
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+                const sizes = new Float32Array(count);
+                const brightness = new Float32Array(count);
+                const rotationSpeeds = new Float32Array(count);
+                const initialAngles = new Float32Array(count);
+                const distances = new Float32Array(count);
+                
+                for (let i = 0; i < count; i++) {
+                    // Spheroidal distribution with de Vaucouleurs profile
+                    // Use rejection sampling for proper density
+                    let r, attempts = 0;
+                    do {
+                        r = Math.random() * GALAXY_CONFIG.bulgeRadius * 2;
+                        attempts++;
+                    } while (Math.random() > bulgeDensity(r, GALAXY_CONFIG.bulgeRadius) && attempts < 10);
+                    
+                    // Spherical coordinates with flattening
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    
+                    // Oblate spheroid (flattened along rotation axis)
+                    const flattening = 0.6;
+                    const x = r * Math.sin(phi) * Math.cos(theta);
+                    const y = r * Math.cos(phi) * flattening;
+                    const z = r * Math.sin(phi) * Math.sin(theta);
+                    
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = z;
+                    
+                    // Bulge stars are older/redder population (K and M dominated)
+                    const rand = Math.random();
+                    let spectralType;
+                    if (rand < 0.65) spectralType = 'M';
+                    else if (rand < 0.90) spectralType = 'K';
+                    else if (rand < 0.97) spectralType = 'G';
+                    else spectralType = 'F';
+                    
+                    const starColor = SPECTRAL_COLORS[spectralType];
+                    
+                    // Warmer/yellower tint for bulge
+                    colors[i * 3] = starColor.r * 1.1;
+                    colors[i * 3 + 1] = starColor.g * 0.95;
+                    colors[i * 3 + 2] = starColor.b * 0.85;
+                    
+                    sizes[i] = 1.5 + Math.random() * 1.5;
+                    
+                    // Brightness increases toward center
+                    const centralBrightness = 1 - r / (GALAXY_CONFIG.bulgeRadius * 2);
+                    brightness[i] = (0.6 + centralBrightness * 0.8) * (0.7 + Math.random() * 0.3);
+                    
+                    // Faster rotation in bulge
+                    const dist = Math.sqrt(x * x + z * z);
+                    distances[i] = dist;
+                    initialAngles[i] = Math.atan2(z, x);
+                    rotationSpeeds[i] = GALAXY_CONFIG.baseRotationSpeed * 1.5 * (0.8 + Math.random() * 0.4);
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('brightness', new THREE.BufferAttribute(brightness, 1));
+                geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(rotationSpeeds, 1));
+                geometry.setAttribute('initialAngle', new THREE.BufferAttribute(initialAngles, 1));
+                geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(distances, 1));
+                
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        globalBrightness: this.uniforms.globalBrightness,
+                        speedMultiplier: this.uniforms.speedMultiplier
+                    },
+                    vertexShader: starVertexShader,
+                    fragmentShader: starFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const stars = new THREE.Points(geometry, material);
+                this.scene.add(stars);
+            }
+
+            createHaloAndGlobularClusters() {
+                // Halo stars and globular clusters
+                const count = GALAXY_CONFIG.haloStars;
+                const geometry = new THREE.BufferGeometry();
+                
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+                const sizes = new Float32Array(count);
+                const brightness = new Float32Array(count);
+                const rotationSpeeds = new Float32Array(count);
+                const initialAngles = new Float32Array(count);
+                const distances = new Float32Array(count);
+                
+                // Create ~50 globular clusters
+                const numClusters = 50;
+                const clusterPositions = [];
+                
+                for (let c = 0; c < numClusters; c++) {
+                    const r = 30 + Math.random() * 150;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    
+                    clusterPositions.push({
+                        x: r * Math.sin(phi) * Math.cos(theta),
+                        y: r * Math.cos(phi),
+                        z: r * Math.sin(phi) * Math.sin(theta),
+                        size: 2 + Math.random() * 4
+                    });
+                }
+                
+                for (let i = 0; i < count; i++) {
+                    let x, y, z;
+                    
+                    // 60% in globular clusters, 40% diffuse halo
+                    if (Math.random() < 0.6 && clusterPositions.length > 0) {
+                        const cluster = clusterPositions[Math.floor(Math.random() * clusterPositions.length)];
+                        const spread = cluster.size;
+                        
+                        x = cluster.x + gaussianRandom(0, spread);
+                        y = cluster.y + gaussianRandom(0, spread);
+                        z = cluster.z + gaussianRandom(0, spread);
+                    } else {
+                        // Diffuse halo (power-law distribution)
+                        const r = 20 + Math.pow(Math.random(), 0.3) * 200;
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        
+                        x = r * Math.sin(phi) * Math.cos(theta);
+                        y = r * Math.cos(phi);
+                        z = r * Math.sin(phi) * Math.sin(theta);
+                    }
+                    
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = z;
+                    
+                    // Halo/GC stars are old, metal-poor (bluer horizontal branch + red giants)
+                    const rand = Math.random();
+                    let spectralType;
+                    if (rand < 0.1) spectralType = 'A'; // Horizontal branch
+                    else if (rand < 0.2) spectralType = 'F';
+                    else if (rand < 0.5) spectralType = 'K';
+                    else spectralType = 'M';
+                    
+                    const starColor = SPECTRAL_COLORS[spectralType];
+                    colors[i * 3] = starColor.r;
+                    colors[i * 3 + 1] = starColor.g;
+                    colors[i * 3 + 2] = starColor.b;
+                    
+                    sizes[i] = 1.0 + Math.random() * 1.5;
+                    brightness[i] = 0.4 + Math.random() * 0.4;
+                    
+                    // Very slow or no rotation (random orbits)
+                    const dist = Math.sqrt(x * x + z * z);
+                    distances[i] = dist;
+                    initialAngles[i] = Math.atan2(z, x);
+                    rotationSpeeds[i] = GALAXY_CONFIG.baseRotationSpeed * 0.3 * Math.random();
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('brightness', new THREE.BufferAttribute(brightness, 1));
+                geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(rotationSpeeds, 1));
+                geometry.setAttribute('initialAngle', new THREE.BufferAttribute(initialAngles, 1));
+                geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(distances, 1));
+                
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        globalBrightness: this.uniforms.globalBrightness,
+                        speedMultiplier: this.uniforms.speedMultiplier
+                    },
+                    vertexShader: starVertexShader,
+                    fragmentShader: starFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const stars = new THREE.Points(geometry, material);
+                this.scene.add(stars);
+            }
+
+            createDustLanes() {
+                // Dark dust lanes along spiral arms
+                const count = GALAXY_CONFIG.dustParticles;
+                const geometry = new THREE.BufferGeometry();
+                
+                const positions = new Float32Array(count * 3);
+                const sizes = new Float32Array(count);
+                const opacity = new Float32Array(count);
+                const rotationSpeeds = new Float32Array(count);
+                const initialAngles = new Float32Array(count);
+                const distances = new Float32Array(count);
+                
+                const armAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
+                
+                for (let i = 0; i < count; i++) {
+                    const armIndex = Math.floor(Math.random() * 4);
+                    const baseAngle = armAngles[armIndex];
+                    
+                    // Follow inner edge of spiral arms
+                    const r = 10 + Math.random() * (GALAXY_CONFIG.diskRadius * 0.7);
+                    const spiralAngle = Math.log(r / 8) / GALAXY_CONFIG.spiralTightness;
+                    
+                    // Offset slightly inward from arm center (dust lanes on inner edge)
+                    let theta = baseAngle + spiralAngle - 0.08;
+                    
+                    // Narrow distribution along lane
+                    theta += gaussianRandom(0, 0.03);
+                    
+                    const x = r * Math.cos(theta);
+                    const z = r * Math.sin(theta);
+                    const y = gaussianRandom(0, 0.5); // Very flat
+                    
+                    positions[i * 3] = x;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = z;
+                    
+                    // Larger particles for dust clouds
+                    sizes[i] = 8 + Math.random() * 15;
+                    
+                    // Variable opacity
+                    opacity[i] = 0.15 + Math.random() * 0.25;
+                    
+                    const dist = Math.sqrt(x * x + z * z);
+                    distances[i] = dist;
+                    initialAngles[i] = Math.atan2(z, x);
+                    rotationSpeeds[i] = GALAXY_CONFIG.baseRotationSpeed * (0.8 + Math.random() * 0.4);
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('opacity', new THREE.BufferAttribute(opacity, 1));
+                geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(rotationSpeeds, 1));
+                geometry.setAttribute('initialAngle', new THREE.BufferAttribute(initialAngles, 1));
+                geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(distances, 1));
+                
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        speedMultiplier: this.uniforms.speedMultiplier
+                    },
+                    vertexShader: dustVertexShader,
+                    fragmentShader: dustFragmentShader,
+                    transparent: true,
+                    blending: THREE.NormalBlending,
+                    depthWrite: false
+                });
+                
+                const dust = new THREE.Points(geometry, material);
+                dust.renderOrder = 1; // Render after stars
+                this.scene.add(dust);
+            }
+
+            // ============================================================
+            // SOLAR SYSTEM
+            // ============================================================
+
+            createSolarSystem() {
+                // Solar System position in galaxy (Orion Arm, ~26,000 ly from center)
+                // In our scale: 26,000 ly = 52 units (1 unit = 500 ly)
+                this.solarSystemPosition = new THREE.Vector3(52, 0, 15);
+
+                // Create solar system group (hidden initially)
+                this.solarSystem = new THREE.Group();
+                this.solarSystem.position.copy(this.solarSystemPosition);
+                this.solarSystem.visible = false;
+                this.solarSystem.scale.set(0.001, 0.001, 0.001); // Start tiny
+
+                // Planet data (scaled for visibility)
+                this.planetData = [
+                    { name: 'Mercury', distance: 3, size: 0.15, color: new THREE.Color(0.7, 0.7, 0.7), color2: new THREE.Color(0.5, 0.5, 0.55), period: 0.24, atmosphere: false },
+                    { name: 'Venus', distance: 4.5, size: 0.35, color: new THREE.Color(0.9, 0.8, 0.6), color2: new THREE.Color(0.85, 0.75, 0.5), period: 0.62, atmosphere: true },
+                    { name: 'Earth', distance: 6, size: 0.38, color: new THREE.Color(0.2, 0.4, 0.8), color2: new THREE.Color(0.3, 0.6, 0.3), period: 1.0, atmosphere: true },
+                    { name: 'Mars', distance: 8, size: 0.2, color: new THREE.Color(0.8, 0.4, 0.2), color2: new THREE.Color(0.7, 0.3, 0.15), period: 1.88, atmosphere: false },
+                    { name: 'Jupiter', distance: 14, size: 1.2, color: new THREE.Color(0.8, 0.7, 0.6), color2: new THREE.Color(0.7, 0.5, 0.4), period: 11.86, atmosphere: true },
+                    { name: 'Saturn', distance: 20, size: 1.0, color: new THREE.Color(0.9, 0.85, 0.6), color2: new THREE.Color(0.85, 0.8, 0.5), period: 29.46, atmosphere: true, rings: true },
+                    { name: 'Uranus', distance: 28, size: 0.6, color: new THREE.Color(0.6, 0.8, 0.9), color2: new THREE.Color(0.5, 0.75, 0.85), period: 84.01, atmosphere: true },
+                    { name: 'Neptune', distance: 35, size: 0.55, color: new THREE.Color(0.3, 0.4, 0.9), color2: new THREE.Color(0.25, 0.35, 0.85), period: 164.8, atmosphere: true }
+                ];
+
+                this.planets = [];
+
+                // Create Sun
+                this.createSun();
+
+                // Create planets
+                this.planetData.forEach(data => this.createPlanet(data));
+
+                // Create orbit lines
+                this.createOrbitLines();
+
+                // Create asteroid belt
+                this.createAsteroidBelt();
+
+                // Add solar system marker in galaxy view
+                this.createSolarSystemMarker();
+
+                this.scene.add(this.solarSystem);
+            }
+
+            createSun() {
+                // Sun with animated surface
+                const sunGeometry = new THREE.SphereGeometry(1.5, 64, 64);
+                const sunMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time
+                    },
+                    vertexShader: sunVertexShader,
+                    fragmentShader: sunFragmentShader,
+                    transparent: false
+                });
+
+                this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
+                this.solarSystem.add(this.sun);
+
+                // Solar corona/glow
+                const coronaGeometry = new THREE.SphereGeometry(2.5, 32, 32);
+                const coronaMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time,
+                        coreGlow: { value: 1.5 }
+                    },
+                    vertexShader: coreVertexShader,
+                    fragmentShader: `
+                        varying vec3 vPosition;
+                        uniform float time;
+                        uniform float coreGlow;
+
+                        void main() {
+                            float dist = length(vPosition);
+                            float glow = exp(-dist * 0.8) * coreGlow;
+                            vec3 color = vec3(1.0, 0.9, 0.5) * glow;
+                            gl_FragColor = vec4(color, glow * 0.6);
+                        }
+                    `,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.BackSide
+                });
+
+                const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+                this.solarSystem.add(corona);
+
+                // Point light from sun
+                const sunLight = new THREE.PointLight(0xffffee, 2, 100);
+                this.solarSystem.add(sunLight);
+            }
+
+            createPlanet(data) {
+                const planetGroup = new THREE.Group();
+
+                // Planet sphere
+                const geometry = new THREE.SphereGeometry(data.size, 32, 32);
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        planetColor: { value: data.color },
+                        planetColor2: { value: data.color2 },
+                        hasRings: { value: data.rings ? 1.0 : 0.0 },
+                        hasAtmosphere: { value: data.atmosphere ? 1.0 : 0.0 },
+                        time: this.uniforms.time
+                    },
+                    vertexShader: planetVertexShader,
+                    fragmentShader: planetFragmentShader
+                });
+
+                const planet = new THREE.Mesh(geometry, material);
+                planetGroup.add(planet);
+
+                // Add rings for Saturn
+                if (data.rings) {
+                    const ringGeometry = new THREE.PlaneGeometry(data.size * 4, data.size * 4);
+                    const ringMaterial = new THREE.ShaderMaterial({
+                        vertexShader: ringsVertexShader,
+                        fragmentShader: ringsFragmentShader,
+                        transparent: true,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    });
+
+                    const rings = new THREE.Mesh(ringGeometry, ringMaterial);
+                    rings.rotation.x = Math.PI * 0.4;
+                    planetGroup.add(rings);
+                }
+
+                // Add moon for Earth
+                if (data.name === 'Earth') {
+                    const moonGeo = new THREE.SphereGeometry(0.1, 16, 16);
+                    const moonMat = new THREE.MeshStandardMaterial({
+                        color: 0xaaaaaa,
+                        roughness: 0.9
+                    });
+                    const moon = new THREE.Mesh(moonGeo, moonMat);
+                    moon.position.set(0.8, 0, 0);
+                    planetGroup.add(moon);
+                    planetGroup.moon = moon;
+                }
+
+                // Store orbit data
+                planetGroup.orbitData = {
+                    distance: data.distance,
+                    period: data.period,
+                    phase: Math.random() * Math.PI * 2
+                };
+
+                planetGroup.planetName = data.name;
+
+                // Initial position
+                planetGroup.position.x = data.distance;
+
+                this.planets.push(planetGroup);
+                this.solarSystem.add(planetGroup);
+            }
+
+            createOrbitLines() {
+                this.planetData.forEach(data => {
+                    const curve = new THREE.EllipseCurve(0, 0, data.distance, data.distance, 0, 2 * Math.PI, false, 0);
+                    const points = curve.getPoints(128);
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+                    const material = new THREE.LineBasicMaterial({
+                        color: 0x334466,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+
+                    const orbit = new THREE.Line(geometry, material);
+                    orbit.rotation.x = Math.PI * 0.5;
+                    this.solarSystem.add(orbit);
+                });
+            }
+
+            createAsteroidBelt() {
+                const asteroidCount = 2000;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(asteroidCount * 3);
+
+                for (let i = 0; i < asteroidCount; i++) {
+                    const r = 10 + Math.random() * 3; // Between Mars and Jupiter
+                    const theta = Math.random() * Math.PI * 2;
+                    const y = (Math.random() - 0.5) * 0.5;
+
+                    positions[i * 3] = Math.cos(theta) * r;
+                    positions[i * 3 + 1] = y;
+                    positions[i * 3 + 2] = Math.sin(theta) * r;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+                const material = new THREE.PointsMaterial({
+                    color: 0x888888,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                const asteroids = new THREE.Points(geometry, material);
+                this.solarSystem.add(asteroids);
+            }
+
+            createSolarSystemMarker() {
+                // Yellow marker showing Sun's position in galaxy
+                const markerGeo = new THREE.SphereGeometry(1.5, 16, 16);
+                const markerMat = new THREE.MeshBasicMaterial({
+                    color: 0xffff00,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                this.solarMarker = new THREE.Mesh(markerGeo, markerMat);
+                this.solarMarker.position.copy(this.solarSystemPosition);
+
+                // Add pulsing glow
+                const glowGeo = new THREE.SphereGeometry(3, 16, 16);
+                const glowMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: this.uniforms.time
+                    },
+                    vertexShader: `
+                        varying vec3 vNormal;
+                        void main() {
+                            vNormal = normal;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec3 vNormal;
+                        uniform float time;
+                        void main() {
+                            float pulse = 0.5 + 0.5 * sin(time * 2.0);
+                            float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+                            gl_FragColor = vec4(1.0, 0.9, 0.3, fresnel * pulse * 0.5);
+                        }
+                    `,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.BackSide
+                });
+
+                const glow = new THREE.Mesh(glowGeo, glowMat);
+                this.solarMarker.add(glow);
+
+                this.scene.add(this.solarMarker);
+            }
+
+            updateSolarSystem() {
+                if (!this.solarSystem.visible) return;
+
+                const time = this.uniforms.time.value * 0.5;
+
+                // Update planet positions
+                this.planets.forEach(planetGroup => {
+                    const { distance, period, phase } = planetGroup.orbitData;
+                    const angle = phase + (time / period) * Math.PI * 2;
+
+                    planetGroup.position.x = Math.cos(angle) * distance;
+                    planetGroup.position.z = Math.sin(angle) * distance;
+
+                    // Rotate planet
+                    planetGroup.children[0].rotation.y += 0.01;
+
+                    // Rotate moon if exists
+                    if (planetGroup.moon) {
+                        const moonAngle = time * 5;
+                        planetGroup.moon.position.x = Math.cos(moonAngle) * 0.8;
+                        planetGroup.moon.position.z = Math.sin(moonAngle) * 0.8;
+                    }
+                });
+            }
+
+            // ============================================================
+            // CINEMATIC CAMERA SYSTEM
+            // ============================================================
+
+            initCinematicSystem() {
+                this.cinematicState = {
+                    active: false,
+                    progress: 0,
+                    phase: 0,
+                    startPosition: new THREE.Vector3(),
+                    startTarget: new THREE.Vector3(),
+                    savedCameraPos: new THREE.Vector3(),
+                    savedTarget: new THREE.Vector3(),
+                    journeyType: null // 'solar' or 'blackhole'
+                };
+
+                // Journey phases for solar system
+                this.solarJourneyPhases = [
+                    { duration: 2, title: 'Leaving Galaxy View', subtitle: 'Beginning journey to the Orion Arm' },
+                    { duration: 3, title: 'Approaching Orion Arm', subtitle: '26,000 light-years from galactic center' },
+                    { duration: 2.5, title: 'Entering Solar System', subtitle: 'Our cosmic home' },
+                    { duration: 2, title: 'Solar System', subtitle: '8 planets orbiting the Sun' }
+                ];
+
+                // Journey phases for black hole
+                this.blackHoleJourneyPhases = [
+                    { duration: 2, title: 'Descending to Galactic Center', subtitle: 'Journey to Sagittarius A*' },
+                    { duration: 3, title: 'Approaching Event Horizon', subtitle: '4 million solar masses' },
+                    { duration: 2, title: 'Sagittarius A*', subtitle: 'The heart of our galaxy' }
+                ];
+            }
+
+            startCinematicJourney(type) {
+                if (this.cinematicState.active) return;
+
+                const state = this.cinematicState;
+                state.active = true;
+                state.progress = 0;
+                state.phase = 0;
+                state.journeyType = type;
+
+                // Save current camera state
+                state.savedCameraPos.copy(this.camera.position);
+                state.savedTarget.copy(this.controls.target);
+                state.startPosition.copy(this.camera.position);
+                state.startTarget.copy(this.controls.target);
+
+                // Disable orbit controls during journey
+                this.controls.enabled = false;
+
+                // Show journey overlay
+                const overlay = document.getElementById('journey-overlay');
+                overlay.classList.add('active');
+
+                // Hide controls panel
+                document.getElementById('controls').classList.add('hidden');
+
+                // Update UI for first phase
+                const phases = type === 'solar' ? this.solarJourneyPhases : this.blackHoleJourneyPhases;
+                this.updateJourneyUI(phases[0]);
+            }
+
+            updateCinematicJourney(deltaTime) {
+                if (!this.cinematicState.active) return;
+
+                const state = this.cinematicState;
+                const phases = state.journeyType === 'solar' ? this.solarJourneyPhases : this.blackHoleJourneyPhases;
+
+                // Update progress
+                state.progress += deltaTime;
+
+                // Calculate total duration up to current phase
+                let phaseStart = 0;
+                for (let i = 0; i < state.phase; i++) {
+                    phaseStart += phases[i].duration;
+                }
+                const phaseDuration = phases[state.phase].duration;
+                const phaseProgress = (state.progress - phaseStart) / phaseDuration;
+
+                // Check phase transition
+                if (phaseProgress >= 1 && state.phase < phases.length - 1) {
+                    state.phase++;
+                    this.updateJourneyUI(phases[state.phase]);
+                }
+
+                // Smooth easing function
+                const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+                // Calculate camera path based on journey type
+                if (state.journeyType === 'solar') {
+                    this.updateSolarJourney(state, phases, easeInOutCubic);
+                } else {
+                    this.updateBlackHoleJourney(state, phases, easeInOutCubic);
+                }
+
+                // Update distance display
+                this.updateDistanceDisplay(state);
+
+                // Check if journey complete
+                const totalDuration = phases.reduce((sum, p) => sum + p.duration, 0);
+                if (state.progress >= totalDuration) {
+                    this.completeCinematicJourney();
+                }
+            }
+
+            updateSolarJourney(state, phases, ease) {
+                const totalDuration = phases.reduce((sum, p) => sum + p.duration, 0);
+                const overallProgress = ease(Math.min(state.progress / totalDuration, 1));
+
+                const targetPos = this.solarSystemPosition.clone();
+
+                // Camera path - smooth transition
+                const startPos = state.startPosition;
+
+                // Intermediate waypoints for cinematic effect
+                const waypoint1 = new THREE.Vector3(
+                    startPos.x * 0.5 + targetPos.x * 0.5,
+                    startPos.y * 0.3 + 100,
+                    startPos.z * 0.5 + targetPos.z * 0.5
+                );
+
+                const waypoint2 = targetPos.clone().add(new THREE.Vector3(0, 30, 50));
+                const finalPos = targetPos.clone().add(new THREE.Vector3(0, 15, 35));
+
+                // Bezier-like interpolation
+                let cameraPos;
+                if (overallProgress < 0.3) {
+                    const t = overallProgress / 0.3;
+                    cameraPos = startPos.clone().lerp(waypoint1, ease(t));
+                } else if (overallProgress < 0.7) {
+                    const t = (overallProgress - 0.3) / 0.4;
+                    cameraPos = waypoint1.clone().lerp(waypoint2, ease(t));
+                } else {
+                    const t = (overallProgress - 0.7) / 0.3;
+                    cameraPos = waypoint2.clone().lerp(finalPos, ease(t));
+                }
+
+                this.camera.position.copy(cameraPos);
+
+                // Target follows smoothly
+                const targetLook = state.startTarget.clone().lerp(targetPos, ease(overallProgress));
+                this.controls.target.copy(targetLook);
+                this.camera.lookAt(targetLook);
+
+                // Scale up solar system as we approach
+                if (overallProgress > 0.5) {
+                    this.solarSystem.visible = true;
+                    this.solarMarker.visible = false;
+                    const scaleProgress = (overallProgress - 0.5) / 0.5;
+                    const scale = 0.001 + ease(scaleProgress) * 0.999;
+                    this.solarSystem.scale.setScalar(scale);
+                }
+            }
+
+            updateBlackHoleJourney(state, phases, ease) {
+                const totalDuration = phases.reduce((sum, p) => sum + p.duration, 0);
+                const overallProgress = ease(Math.min(state.progress / totalDuration, 1));
+
+                const targetPos = new THREE.Vector3(0, 0, 0); // Black hole at center
+
+                const startPos = state.startPosition;
+                const waypoint1 = new THREE.Vector3(startPos.x * 0.3, startPos.y * 0.5 + 50, startPos.z * 0.3);
+                const waypoint2 = new THREE.Vector3(15, 8, 20);
+                const finalPos = new THREE.Vector3(8, 3, 12);
+
+                let cameraPos;
+                if (overallProgress < 0.3) {
+                    const t = overallProgress / 0.3;
+                    cameraPos = startPos.clone().lerp(waypoint1, ease(t));
+                } else if (overallProgress < 0.7) {
+                    const t = (overallProgress - 0.3) / 0.4;
+                    cameraPos = waypoint1.clone().lerp(waypoint2, ease(t));
+                } else {
+                    const t = (overallProgress - 0.7) / 0.3;
+                    cameraPos = waypoint2.clone().lerp(finalPos, ease(t));
+                }
+
+                this.camera.position.copy(cameraPos);
+
+                const targetLook = state.startTarget.clone().lerp(targetPos, ease(overallProgress));
+                this.controls.target.copy(targetLook);
+                this.camera.lookAt(targetLook);
+            }
+
+            updateJourneyUI(phase) {
+                const title = document.getElementById('journey-title');
+                const sub = document.getElementById('journey-sub');
+
+                // Fade out
+                title.classList.remove('visible');
+                sub.classList.remove('visible');
+
+                setTimeout(() => {
+                    title.textContent = phase.title;
+                    sub.textContent = phase.subtitle;
+
+                    // Fade in
+                    title.classList.add('visible');
+                    sub.classList.add('visible');
+                }, 500);
+            }
+
+            updateDistanceDisplay(state) {
+                const distEl = document.getElementById('journey-dist');
+
+                if (state.journeyType === 'solar') {
+                    // Calculate approximate distance (26,000 ly journey)
+                    const totalDuration = this.solarJourneyPhases.reduce((sum, p) => sum + p.duration, 0);
+                    const remaining = Math.max(0, 26000 * (1 - state.progress / totalDuration));
+                    distEl.textContent = remaining > 1 ? `${Math.round(remaining).toLocaleString()} ly` : 'Arrived';
+                } else {
+                    // Distance to black hole
+                    const dist = this.camera.position.length();
+                    distEl.textContent = dist > 10 ? `${Math.round(dist * 500).toLocaleString()} ly` : 'At center';
+                }
+
+                distEl.classList.add('visible');
+            }
+
+            completeCinematicJourney() {
+                const state = this.cinematicState;
+                state.active = false;
+
+                // Hide journey overlay
+                const overlay = document.getElementById('journey-overlay');
+                overlay.classList.remove('active');
+                document.getElementById('journey-title').classList.remove('visible');
+                document.getElementById('journey-sub').classList.remove('visible');
+                document.getElementById('journey-dist').classList.remove('visible');
+
+                // Re-enable controls with new constraints
+                this.controls.enabled = true;
+
+                if (state.journeyType === 'solar') {
+                    this.controls.minDistance = 5;
+                    this.controls.maxDistance = 100;
+                    this.controls.target.copy(this.solarSystemPosition);
+                } else {
+                    this.controls.minDistance = 5;
+                    this.controls.maxDistance = 50;
+                    this.controls.target.set(0, 0, 0);
+                }
+
+                // Show return button
+                document.getElementById('btn-return').style.display = 'block';
+
+                this.controls.update();
+            }
+
+            returnToGalaxy() {
+                const state = this.cinematicState;
+
+                // Hide solar system
+                if (this.solarSystem) {
+                    this.solarSystem.visible = false;
+                    this.solarSystem.scale.set(0.001, 0.001, 0.001);
+                }
+                if (this.solarMarker) {
+                    this.solarMarker.visible = true;
+                }
+
+                // Animate camera back
+                const startPos = this.camera.position.clone();
+                const targetPos = state.savedCameraPos;
+                const startTarget = this.controls.target.clone();
+                const endTarget = state.savedTarget;
+
+                const duration = 2000;
+                const startTime = performance.now();
+
+                const animateReturn = () => {
+                    const elapsed = performance.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                    const t = ease(progress);
+
+                    this.camera.position.lerpVectors(startPos, targetPos, t);
+                    this.controls.target.lerpVectors(startTarget, endTarget, t);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateReturn);
+                    } else {
+                        // Restore control limits
+                        this.controls.minDistance = 30;
+                        this.controls.maxDistance = 800;
+                        this.controls.update();
+
+                        // Hide return button
+                        document.getElementById('btn-return').style.display = 'none';
+
+                        // Show controls panel
+                        document.getElementById('controls').classList.remove('hidden');
+                    }
+                };
+
+                animateReturn();
+            }
+
+            setupPostProcessing() {
+                // Effect composer for bloom
+                this.composer = new EffectComposer(this.renderer);
+                
+                const renderPass = new RenderPass(this.scene, this.camera);
+                this.composer.addPass(renderPass);
+                
+                // Bloom pass for realistic star glow
+                const bloomPass = new UnrealBloomPass(
+                    new THREE.Vector2(window.innerWidth, window.innerHeight),
+                    0.8,   // Strength
+                    0.4,   // Radius
+                    0.2    // Threshold
+                );
+                this.composer.addPass(bloomPass);
+                this.bloomPass = bloomPass;
+            }
+            
+            onResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+
+                this.renderer.setSize(width, height);
+                this.composer.setSize(width, height);
+            }
+
+            setupControls() {
+                const self = this;
+
+                // Speed control
+                const speedSlider = document.getElementById('speed');
+                const speedVal = document.getElementById('speed-val');
+                speedSlider.addEventListener('input', function() {
+                    self.speedMultiplier = parseFloat(this.value);
+                    self.uniforms.speedMultiplier.value = self.speedMultiplier;
+                    speedVal.textContent = this.value + 'x';
+                });
+
+                // Brightness control
+                const brightnessSlider = document.getElementById('brightness');
+                const brightnessVal = document.getElementById('brightness-val');
+                brightnessSlider.addEventListener('input', function() {
+                    self.uniforms.globalBrightness.value = parseFloat(this.value);
+                    brightnessVal.textContent = Math.round(this.value * 100) + '%';
+                });
+
+                // Bloom control
+                const bloomSlider = document.getElementById('bloom');
+                const bloomVal = document.getElementById('bloom-val');
+                bloomSlider.addEventListener('input', function() {
+                    self.bloomPass.strength = parseFloat(this.value);
+                    bloomVal.textContent = this.value;
+                });
+
+                // Core glow control
+                const coreSlider = document.getElementById('core');
+                const coreVal = document.getElementById('core-val');
+                coreSlider.addEventListener('input', function() {
+                    self.uniforms.coreGlow.value = parseFloat(this.value);
+                    coreVal.textContent = Math.round(this.value * 100) + '%';
+                });
+
+                // Time scale control
+                const timeSlider = document.getElementById('timescale');
+                const timeVal = document.getElementById('time-val');
+                timeSlider.addEventListener('input', function() {
+                    self.timeScale = parseFloat(this.value);
+                    timeVal.textContent = this.value + 'x';
+                });
+
+                // Play/Pause buttons
+                const btnPlay = document.getElementById('btn-play');
+                const btnPause = document.getElementById('btn-pause');
+
+                btnPlay.addEventListener('click', function() {
+                    self.isPaused = false;
+                    btnPlay.classList.add('active');
+                    btnPause.classList.remove('active');
+                });
+
+                btnPause.addEventListener('click', function() {
+                    self.isPaused = true;
+                    btnPause.classList.add('active');
+                    btnPlay.classList.remove('active');
+                });
+
+                // Auto-rotate button
+                const btnAutorotate = document.getElementById('btn-autorotate');
+                btnAutorotate.addEventListener('click', function() {
+                    self.controls.autoRotate = !self.controls.autoRotate;
+                    this.classList.toggle('active');
+                });
+
+                // Reset view button
+                const btnReset = document.getElementById('btn-reset');
+                btnReset.addEventListener('click', function() {
+                    self.camera.position.set(0, 150, 250);
+                    self.controls.target.set(0, 0, 0);
+                    self.controls.update();
+                });
+
+                // Top view button
+                const btnTop = document.getElementById('btn-top');
+                btnTop.addEventListener('click', function() {
+                    self.camera.position.set(0, 350, 0.1);
+                    self.controls.target.set(0, 0, 0);
+                    self.controls.update();
+                });
+
+                // Side view button
+                const btnSide = document.getElementById('btn-side');
+                btnSide.addEventListener('click', function() {
+                    self.camera.position.set(350, 10, 0);
+                    self.controls.target.set(0, 0, 0);
+                    self.controls.update();
+                });
+
+                // Toggle panel button
+                const togglePanel = document.getElementById('toggle-panel');
+                const controlsPanel = document.getElementById('controls');
+                togglePanel.addEventListener('click', function() {
+                    controlsPanel.classList.remove('hidden');
+                });
+
+                // Close panel with Escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        controlsPanel.classList.add('hidden');
+                    }
+                    if (e.key === ' ') {
+                        e.preventDefault();
+                        self.isPaused = !self.isPaused;
+                        if (self.isPaused) {
+                            btnPause.classList.add('active');
+                            btnPlay.classList.remove('active');
+                        } else {
+                            btnPlay.classList.add('active');
+                            btnPause.classList.remove('active');
+                        }
+                    }
+                });
+
+                // Solar System journey button
+                const btnSolar = document.getElementById('btn-solar');
+                btnSolar.addEventListener('click', function() {
+                    self.startCinematicJourney('solar');
+                });
+
+                // Black Hole journey button
+                const btnBlackhole = document.getElementById('btn-blackhole');
+                btnBlackhole.addEventListener('click', function() {
+                    self.startCinematicJourney('blackhole');
+                });
+
+                // Return to galaxy button
+                const btnReturn = document.getElementById('btn-return');
+                btnReturn.addEventListener('click', function() {
+                    self.returnToGalaxy();
+                });
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const now = performance.now();
+                const deltaTime = (now - this.lastFrameTime) / 1000;
+                this.lastFrameTime = now;
+
+                // FPS calculation
+                this.frameCount++;
+                if (now - this.fpsUpdateTime > 500) {
+                    const fps = Math.round(this.frameCount / ((now - this.fpsUpdateTime) / 1000));
+                    document.getElementById('fps-val').textContent = fps;
+                    this.frameCount = 0;
+                    this.fpsUpdateTime = now;
+                }
+
+                // Update simulation time (unless paused)
+                if (!this.isPaused) {
+                    this.simulationTime += deltaTime * this.timeScale;
+                }
+                this.uniforms.time.value = this.simulationTime;
+
+                // Update rotation display (degrees)
+                const rotationDegrees = Math.round((this.simulationTime * this.speedMultiplier * 0.15 * 180 / Math.PI) % 360);
+                document.getElementById('rotation-val').textContent = rotationDegrees + '°';
+
+                // Update cinematic journey if active
+                this.updateCinematicJourney(deltaTime);
+
+                // Update solar system planet orbits
+                this.updateSolarSystem();
+
+                // Update controls (only if not in cinematic mode)
+                if (!this.cinematicState.active) {
+                    this.controls.update();
+                }
+
+                // Make black hole plane face camera
+                if (this.blackHolePlane) {
+                    this.blackHolePlane.lookAt(this.camera.position);
+                }
+
+                // Render with post-processing
+                this.composer.render();
+            }
+        }
+        
+        // Initialize simulation
+        new MilkyWaySimulation();
+    </script>
+</body>
+</html>
