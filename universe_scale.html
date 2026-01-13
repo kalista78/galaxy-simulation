@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universe Scale - Powers of Ten Journey</title>
+    <link rel="stylesheet" href="universe_scale.css?v=1">
+</head>
+<body>
+    <!-- Main Canvas Container -->
+    <div id="universe-container"></div>
+
+    <!-- Scale Info Panel -->
+    <div id="scale-info">
+        <div class="scale-name" id="scale-name">Planck Length</div>
+        <div class="scale-size" id="scale-size">1.6 × 10<sup>-35</sup> m</div>
+        <div class="scale-description" id="scale-description">The smallest meaningful length in physics</div>
+    </div>
+
+    <!-- Powers of Ten Counter -->
+    <div id="powers-counter">
+        <div class="powers-label">SCALE</div>
+        <div class="powers-value">10<sup id="power-exponent">-35</sup></div>
+        <div class="powers-unit">meters</div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+        <div id="progress-markers"></div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div id="nav-controls">
+        <button class="nav-btn" id="btn-prev" title="Previous Scale (Left Arrow)">
+            <span class="arrow">&#8592;</span>
+        </button>
+        <button class="nav-btn" id="btn-play" title="Play/Pause (Space)">
+            <span class="play-icon">&#9654;</span>
+            <span class="pause-icon" style="display:none;">&#10074;&#10074;</span>
+        </button>
+        <button class="nav-btn" id="btn-next" title="Next Scale (Right Arrow)">
+            <span class="arrow">&#8594;</span>
+        </button>
+    </div>
+
+    <!-- Scale Slider -->
+    <div id="scale-slider-container">
+        <input type="range" id="scale-slider" min="0" max="100" value="0">
+        <div class="slider-labels">
+            <span>Planck</span>
+            <span>Human</span>
+            <span>Universe</span>
+        </div>
+    </div>
+
+    <!-- Return to Galaxy Button -->
+    <a href="index.html" id="btn-galaxy" title="Return to Galaxy Simulation">
+        <span class="galaxy-icon">&#127756;</span>
+        <span class="btn-text">Galaxy View</span>
+    </a>
+
+    <!-- Keyboard Shortcuts Help -->
+    <div id="shortcuts-help">
+        <div class="shortcut"><kbd>Space</kbd> Play/Pause</div>
+        <div class="shortcut"><kbd>&#8592;</kbd><kbd>&#8594;</kbd> Navigate</div>
+        <div class="shortcut"><kbd>Scroll</kbd> Zoom</div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="loading-title">UNIVERSE SCALE</div>
+            <div class="loading-subtitle">A Journey Through 62 Orders of Magnitude</div>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <div class="loading-text">Initializing cosmic journey...</div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { UniverseScaleSimulation } from './js/UniverseScaleSimulation.js?v=1';
+
+        // Initialize simulation
+        window.universeSimulation = new UniverseScaleSimulation();
+    </script>
+</body>
+</html>

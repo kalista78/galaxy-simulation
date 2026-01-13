@@ -453,6 +453,20 @@ canvas {
         inset 0 0 15px rgba(100, 200, 150, 0.1);
 }
 
+#btn-universe {
+    background: linear-gradient(135deg, rgba(100, 255, 200, 0.15), rgba(150, 100, 255, 0.1));
+    border-color: rgba(100, 255, 200, 0.4);
+    color: #64ffc8;
+}
+
+#btn-universe:hover {
+    background: linear-gradient(135deg, rgba(100, 255, 200, 0.25), rgba(150, 100, 255, 0.2));
+    border-color: rgba(100, 255, 200, 0.7);
+    box-shadow:
+        0 0 25px rgba(100, 255, 200, 0.3),
+        0 0 50px rgba(150, 100, 255, 0.15);
+}
+
 /* Stats Section */
 .stats {
     margin-top: 18px;
