@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Explorer - Deep Space Nebulae</title>
+    <link rel="stylesheet" href="nebula.css?v=1">
+    <link rel="stylesheet" href="nav.css?v=1">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loader-ring"></div>
+        <div class="loader-text">Generating Nebula</div>
+        <div class="loader-nebula-name">Orion Nebula</div>
+    </div>
+
+    <!-- Transition Overlay -->
+    <div id="transition-overlay"></div>
+
+    <!-- Back to Galaxy Button -->
+    <a href="portal.html" id="btn-back">
+        <span class="arrow">&#8592;</span>
+        <span>Galaxy</span>
+    </a>
+
+    <!-- Nebula Selector (Left Sidebar) -->
+    <div id="nebula-selector">
+        <div class="nebula-thumb active" data-nebula="orion" title="Orion Nebula (M42)">
+            <div class="thumb-icon"></div>
+            <span class="thumb-label">Orion</span>
+        </div>
+        <div class="nebula-thumb" data-nebula="eagle" title="Eagle Nebula (M16)">
+            <div class="thumb-icon"></div>
+            <span class="thumb-label">Eagle</span>
+        </div>
+        <div class="nebula-thumb" data-nebula="crab" title="Crab Nebula (M1)">
+            <div class="thumb-icon"></div>
+            <span class="thumb-label">Crab</span>
+        </div>
+        <div class="nebula-thumb" data-nebula="ring" title="Ring Nebula (M57)">
+            <div class="thumb-icon"></div>
+            <span class="thumb-label">Ring</span>
+        </div>
+        <div class="nebula-thumb" data-nebula="helix" title="Helix Nebula (NGC 7293)">
+            <div class="thumb-icon"></div>
+            <span class="thumb-label">Helix</span>
+        </div>
+        <div class="nebula-thumb" data-nebula="carina" title="Carina Nebula (NGC 3372)">
+            <div class="thumb-icon"></div>
+            <span class="thumb-label">Carina</span>
+        </div>
+    </div>
+
+    <!-- Control Panel (Right Side) -->
+    <div id="controls">
+        <h2>Nebula Explorer</h2>
+
+        <div class="section-label">Emission Filter</div>
+        <div class="control-row">
+            <button class="btn btn-filter active" data-filter="visual">Visual</button>
+            <button class="btn btn-filter" data-filter="halpha">H-&alpha;</button>
+            <button class="btn btn-filter" data-filter="oiii">OIII</button>
+        </div>
+
+        <div class="section-label">Display</div>
+
+        <div class="toggle-row">
+            <span class="toggle-label">Star Formation</span>
+            <div class="toggle-switch active" id="toggle-stars"></div>
+        </div>
+
+        <div class="toggle-row">
+            <span class="toggle-label">Auto Rotate</span>
+            <div class="toggle-switch active" id="toggle-rotate"></div>
+        </div>
+
+        <div class="control-group">
+            <label>Bloom Intensity <span class="value" id="bloom-val">1.2</span></label>
+            <input type="range" id="bloom-intensity" min="0" max="3" step="0.1" value="1.2">
+        </div>
+
+        <div class="section-label">Camera</div>
+        <div class="control-row">
+            <button class="btn" id="btn-reset">Reset View</button>
+        </div>
+    </div>
+
+    <!-- Info Panel (Bottom) -->
+    <div id="info-panel">
+        <div class="info-name" id="info-name">Orion Nebula</div>
+        <div class="info-designation" id="info-designation">M42 / NGC 1976</div>
+        <div class="info-stats">
+            <div class="info-stat">
+                <span class="info-stat-label">Type</span>
+                <span class="info-stat-value" id="info-type">Emission Nebula</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">Distance</span>
+                <span class="info-stat-value" id="info-distance">1,344 ly</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">Size</span>
+                <span class="info-stat-value" id="info-size">24 ly</span>
+            </div>
+        </div>
+        <div class="info-description" id="info-description">
+            A massive stellar nursery where hundreds of new stars are being born. The brightest diffuse nebula visible to the naked eye, illuminated by the young Trapezium star cluster at its core.
+        </div>
+    </div>
+
+    <!-- FPS Counter -->
+    <div id="fps">-- FPS</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { NebulaExplorer } from './js/NebulaExplorer.js?v=1';
+        new NebulaExplorer();
+    </script>
+
+    <script type="module">
+        import { initNavigation } from './js/nav.js?v=1';
+        initNavigation({ activePage: 'nebulae' });
+    </script>
+</body>
+</html>

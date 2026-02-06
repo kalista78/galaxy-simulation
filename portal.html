@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GALAXY - An Interactive Journey Through the Cosmos</title>
+    <meta name="description" content="Explore the universe through stunning Three.js simulations. Galaxy formations, nebulae, cosmic evolution, gravity physics, and more.">
+    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="nav.css?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+
+    <!-- Three.js Main Canvas -->
+    <canvas id="portal-canvas"></canvas>
+
+    <!-- Floating CSS dust overlay -->
+    <div class="cosmic-dust" id="cosmic-dust" aria-hidden="true"></div>
+
+    <!-- Intro Overlay (title + subtitle) -->
+    <div id="intro-overlay">
+        <div class="title-container">
+            <h1 class="title-text">
+                <span class="letter">G</span><span class="letter">A</span><span class="letter">L</span><span class="letter">A</span><span class="letter">X</span><span class="letter">Y</span>
+            </h1>
+        </div>
+        <div class="title-accent"></div>
+        <p class="subtitle">An Interactive Journey Through the Cosmos</p>
+    </div>
+
+    <!-- Skip Intro Button -->
+    <button id="skip-btn" aria-label="Skip intro animation">Skip Intro</button>
+
+    <!-- Navigation Hub -->
+    <div id="nav-hub" role="navigation" aria-label="Simulation navigation">
+        <h2 class="hub-title">GALAXY</h2>
+        <p class="hub-subtitle">Choose Your Destination</p>
+
+        <div class="card-grid">
+
+            <!-- Card 1: Milky Way -->
+            <a href="index.html" class="nav-card" data-theme="0">
+                <span class="card-number">01</span>
+                <div class="card-preview">
+                    <canvas class="card-canvas" data-theme="0"></canvas>
+                </div>
+                <div class="card-content">
+                    <span class="card-icon">&#x1F30C;</span>
+                    <h3 class="card-title">Milky Way</h3>
+                    <p class="card-desc">300,000 stars in motion</p>
+                </div>
+                <span class="card-arrow">&rarr;</span>
+            </a>
+
+            <!-- Card 2: Nebula Explorer -->
+            <a href="nebula.html" class="nav-card" data-theme="1">
+                <span class="card-number">02</span>
+                <div class="card-preview">
+                    <canvas class="card-canvas" data-theme="1"></canvas>
+                </div>
+                <div class="card-content">
+                    <span class="card-icon">&#x2728;</span>
+                    <h3 class="card-title">Nebula Explorer</h3>
+                    <p class="card-desc">Stellar nurseries &amp; remnants</p>
+                </div>
+                <span class="card-arrow">&rarr;</span>
+            </a>
+
+            <!-- Card 3: Cosmic Evolution -->
+            <a href="evolution.html" class="nav-card" data-theme="2">
+                <span class="card-number">03</span>
+                <div class="card-preview">
+                    <canvas class="card-canvas" data-theme="2"></canvas>
+                </div>
+                <div class="card-content">
+                    <span class="card-icon">&#x1F4AB;</span>
+                    <h3 class="card-title">Cosmic Evolution</h3>
+                    <p class="card-desc">13.8 billion years in minutes</p>
+                </div>
+                <span class="card-arrow">&rarr;</span>
+            </a>
+
+            <!-- Card 4: Gravity Lab -->
+            <a href="gravity.html" class="nav-card" data-theme="3">
+                <span class="card-number">04</span>
+                <div class="card-preview">
+                    <canvas class="card-canvas" data-theme="3"></canvas>
+                </div>
+                <div class="card-content">
+                    <span class="card-icon">&#x2699;&#xFE0F;</span>
+                    <h3 class="card-title">Gravity Lab</h3>
+                    <p class="card-desc">N-body physics playground</p>
+                </div>
+                <span class="card-arrow">&rarr;</span>
+            </a>
+
+            <!-- Card 5: Universe Scale -->
+            <a href="universe_scale.html" class="nav-card" data-theme="4">
+                <span class="card-number">05</span>
+                <div class="card-preview">
+                    <canvas class="card-canvas" data-theme="4"></canvas>
+                </div>
+                <div class="card-content">
+                    <span class="card-icon">&#x1F52D;</span>
+                    <h3 class="card-title">Universe Scale</h3>
+                    <p class="card-desc">Powers of Ten journey</p>
+                </div>
+                <span class="card-arrow">&rarr;</span>
+            </a>
+
+            <!-- Card 6: Milky Way Classic -->
+            <a href="milky_way_simulation.html" class="nav-card" data-theme="5">
+                <span class="card-number">06</span>
+                <div class="card-preview">
+                    <canvas class="card-canvas" data-theme="5"></canvas>
+                </div>
+                <div class="card-content">
+                    <span class="card-icon">&#x2B50;</span>
+                    <h3 class="card-title">Milky Way Classic</h3>
+                    <p class="card-desc">Original detailed view</p>
+                </div>
+                <span class="card-arrow">&rarr;</span>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Warp flash overlay for card transitions -->
+    <div id="warp-flash"></div>
+
+    <!-- Loading bar -->
+    <div id="loading-indicator">
+        <div class="bar" id="loading-bar"></div>
+    </div>
+
+    <!-- Import Map for Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { PortalSimulation, CardPreview } from './js/PortalSimulation.js';
+
+        // ─── DOM References ──────────────────────────────────────────────
+        const canvas        = document.getElementById('portal-canvas');
+        const introOverlay  = document.getElementById('intro-overlay');
+        const skipBtn       = document.getElementById('skip-btn');
+        const navHub        = document.getElementById('nav-hub');
+        const warpFlash     = document.getElementById('warp-flash');
+        const loadingBar    = document.getElementById('loading-bar');
+        const loadingEl     = document.getElementById('loading-indicator');
+        const dustContainer = document.getElementById('cosmic-dust');
+        const cards         = document.querySelectorAll('.nav-card');
+        const cardCanvases  = document.querySelectorAll('.card-canvas');
+
+        // ─── State ───────────────────────────────────────────────────────
+        let sim = null;
+        let cardPreviews = [];
+        let introSkipped = false;
+        let navigationInProgress = false;
+
+        // ─── Loading ─────────────────────────────────────────────────────
+        function setLoadingProgress(pct) {
+            loadingBar.style.width = pct + '%';
+            if (pct >= 100) {
+                loadingEl.classList.add('complete');
+            }
+        }
+
+        // ─── Create Cosmic Dust (CSS) ────────────────────────────────────
+        function createCosmicDust() {
+            const count = 30;
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'dust-particle';
+                const startX = Math.random() * 100;
+                const startY = Math.random() * 100;
+                const dx = (Math.random() - 0.5) * 200;
+                const dy = (Math.random() - 0.5) * 200;
+                const duration = 10 + Math.random() * 20;
+                const delay = Math.random() * duration;
+                const size = 1 + Math.random() * 2;
+
+                el.style.cssText = `
+                    left: ${startX}%;
+                    top: ${startY}%;
+                    width: ${size}px;
+                    height: ${size}px;
+                    --dx: ${dx}px;
+                    --dy: ${dy}px;
+                    animation-duration: ${duration}s;
+                    animation-delay: -${delay}s;
+                    opacity: ${0.2 + Math.random() * 0.3};
+                `;
+                dustContainer.appendChild(el);
+            }
+        }
+
+        // ─── Initialize ──────────────────────────────────────────────────
+        function init() {
+            setLoadingProgress(20);
+            createCosmicDust();
+
+            // Main simulation
+            sim = new PortalSimulation(canvas);
+            setLoadingProgress(70);
+
+            sim.onIntroComplete = () => {
+                showNavHub();
+            };
+
+            setLoadingProgress(100);
+        }
+
+        // ─── Show Navigation Hub ─────────────────────────────────────────
+        function showNavHub() {
+            if (navHub.classList.contains('visible')) return;
+
+            // Fade out intro overlay
+            introOverlay.classList.add('hidden');
+            skipBtn.classList.add('hidden');
+
+            // Show nav hub
+            setTimeout(() => {
+                navHub.classList.add('visible');
+                revealCards();
+                initCardPreviews();
+            }, 600);
+        }
+
+        // ─── Reveal Cards with Stagger ───────────────────────────────────
+        function revealCards() {
+            cards.forEach((card, i) => {
+                setTimeout(() => {
+                    card.classList.add('revealed');
+                }, i * 120);
+            });
+        }
+
+        // ─── Init Card Preview Canvases ──────────────────────────────────
+        function initCardPreviews() {
+            cardCanvases.forEach((cvs, i) => {
+                const preview = new CardPreview(cvs, i);
+                cardPreviews.push(preview);
+            });
+        }
+
+        // ─── Card Hover ──────────────────────────────────────────────────
+        cards.forEach((card, i) => {
+            card.addEventListener('mouseenter', () => {
+                if (cardPreviews[i]) {
+                    cardPreviews[i].setHovered(true);
+                }
+            });
+            card.addEventListener('mouseleave', () => {
+                if (cardPreviews[i]) {
+                    cardPreviews[i].setHovered(false);
+                }
+            });
+        });
+
+        // ─── Card Click (warp transition) ────────────────────────────────
+        cards.forEach((card) => {
+            card.addEventListener('click', (e) => {
+                if (navigationInProgress) return;
+                e.preventDefault();
+                navigationInProgress = true;
+
+                const href = card.getAttribute('href');
+                card.classList.add('warping');
+
+                // Flash and warp
+                sim.triggerWarpOut();
+
+                setTimeout(() => {
+                    warpFlash.classList.add('active');
+                }, 300);
+
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 900);
+            });
+        });
+
+        // ─── Skip Intro ──────────────────────────────────────────────────
+        function skipIntro() {
+            if (introSkipped) return;
+            introSkipped = true;
+            sim.skipIntro();
+        }
+
+        skipBtn.addEventListener('click', skipIntro);
+
+        // Keyboard skip
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+                if (!sim.introComplete) {
+                    e.preventDefault();
+                    skipIntro();
+                }
+            }
+        });
+
+        // ─── Boot ────────────────────────────────────────────────────────
+        init();
+    </script>
+
+    <script type="module">
+        import { initNavigation } from './js/nav.js?v=1';
+        initNavigation({ activePage: 'portal' });
+    </script>
+</body>
+</html>

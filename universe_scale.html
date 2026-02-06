@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universe Scale - Powers of Ten Journey</title>
-    <link rel="stylesheet" href="universe_scale.css?v=1">
+    <link rel="stylesheet" href="universe_scale.css?v=2">
+    <link rel="stylesheet" href="nav.css?v=1">
 </head>
 <body>
     <!-- Main Canvas Container -->
@@ -93,6 +94,11 @@
 
         // Initialize simulation
         window.universeSimulation = new UniverseScaleSimulation();
+    </script>
+
+    <script type="module">
+        import { initNavigation } from './js/nav.js?v=1';
+        initNavigation({ activePage: 'scale' });
     </script>
 </body>
 </html>

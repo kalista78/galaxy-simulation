@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Body Gravity Playground</title>
+    <link rel="stylesheet" href="gravity.css?v=1">
+    <link rel="stylesheet" href="nav.css?v=1">
+</head>
+<body>
+
+    <!-- ================================================
+         TOOLBAR (Top - Body Type Selector)
+         ================================================ -->
+    <div id="toolbar">
+        <button class="tool-btn active" data-tool="star">
+            <span class="tool-icon">&#9733;</span>
+            <span>Star</span>
+        </button>
+        <button class="tool-btn" data-tool="planet">
+            <span class="tool-icon">&#9679;</span>
+            <span>Planet</span>
+        </button>
+        <button class="tool-btn" data-tool="blackhole">
+            <span class="tool-icon">&#9673;</span>
+            <span>Black Hole</span>
+        </button>
+        <button class="tool-btn" data-tool="asteroids">
+            <span class="tool-icon">&#10043;</span>
+            <span>Asteroids</span>
+        </button>
+        <button class="tool-btn" data-tool="gascloud">
+            <span class="tool-icon">&#9729;</span>
+            <span>Gas Cloud</span>
+        </button>
+    </div>
+
+    <!-- ================================================
+         LEFT CONTROL PANEL
+         ================================================ -->
+    <div id="control-panel">
+        <div class="panel-title">Gravity Controls</div>
+
+        <!-- Simulation Controls -->
+        <div class="section-header">Simulation</div>
+
+        <div class="ctrl-group">
+            <label>Gravity (G) <span class="val" id="val-g">1.00</span></label>
+            <input type="range" id="slider-g" min="0.01" max="5" step="0.01" value="1">
+        </div>
+
+        <div class="ctrl-group">
+            <label>Time Speed <span class="val" id="val-time">1.0x</span></label>
+            <input type="range" id="slider-time" min="0.1" max="10" step="0.1" value="1">
+        </div>
+
+        <div class="ctrl-row">
+            <button class="ctrl-btn play-btn active" id="btn-play">Play</button>
+            <button class="ctrl-btn pause-btn" id="btn-pause">Pause</button>
+            <button class="ctrl-btn reset-btn" id="btn-reset">Reset</button>
+        </div>
+
+        <!-- Presets -->
+        <div class="section-header">Presets</div>
+
+        <div class="ctrl-group">
+            <select id="preset-select">
+                <option value="">Load a Preset...</option>
+                <option value="binary">Binary Stars</option>
+                <option value="solar">Solar System</option>
+                <option value="figure8">Figure Eight</option>
+                <option value="galaxycollision">Galaxy Collision</option>
+                <option value="lagrange">Lagrange Points</option>
+                <option value="random">Random Chaos</option>
+            </select>
+        </div>
+
+        <!-- View Controls -->
+        <div class="section-header">View</div>
+
+        <div class="toggle-row">
+            <label for="toggle-trails">Trails</label>
+            <div class="toggle-switch">
+                <input type="checkbox" id="toggle-trails" checked>
+                <span class="toggle-slider"></span>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <label for="toggle-gravfield">Gravity Field</label>
+            <div class="toggle-switch">
+                <input type="checkbox" id="toggle-gravfield">
+                <span class="toggle-slider"></span>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <label for="toggle-grid">Grid</label>
+            <div class="toggle-switch">
+                <input type="checkbox" id="toggle-grid" checked>
+                <span class="toggle-slider"></span>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <label for="toggle-2d">2D Mode</label>
+            <div class="toggle-switch">
+                <input type="checkbox" id="toggle-2d">
+                <span class="toggle-slider"></span>
+            </div>
+        </div>
+
+        <!-- Camera -->
+        <div class="section-header">Camera</div>
+
+        <div class="ctrl-row">
+            <button class="ctrl-btn" id="btn-follow-body">Follow Body</button>
+            <button class="ctrl-btn" id="btn-follow-com">Follow C.O.M</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-area">
+            <div class="stat-row">
+                <span>Bodies</span>
+                <span class="stat-val" id="stat-bodies">0</span>
+            </div>
+            <div class="stat-row">
+                <span>Total Energy</span>
+                <span class="stat-val" id="stat-energy">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================
+         RIGHT INFO PANEL (Selected Body)
+         ================================================ -->
+    <div id="info-panel">
+        <div class="panel-title">Selected Body</div>
+
+        <div class="body-info-row">
+            <span class="info-label">Type</span>
+            <span class="info-val" id="info-type">--</span>
+        </div>
+        <div class="body-info-row">
+            <span class="info-label">Mass</span>
+            <span class="info-val" id="info-mass">--</span>
+        </div>
+        <div class="body-info-row">
+            <span class="info-label">Speed</span>
+            <span class="info-val" id="info-speed">--</span>
+        </div>
+        <div class="body-info-row">
+            <span class="info-label">Position</span>
+            <span class="info-val" id="info-pos">--</span>
+        </div>
+        <div class="body-info-row">
+            <span class="info-label">Kinetic E</span>
+            <span class="info-val" id="info-ke">--</span>
+        </div>
+
+        <div class="body-actions">
+            <button class="ctrl-btn" id="btn-follow-selected">Follow</button>
+            <button class="ctrl-btn reset-btn" id="btn-delete-body">Delete</button>
+        </div>
+    </div>
+
+    <!-- ================================================
+         BOTTOM INFO BAR
+         ================================================ -->
+    <div id="bottom-info">
+        <span>Bodies: <span class="val" id="bottom-bodies">0</span></span>
+        <span>FPS: <span class="val" id="bottom-fps">60</span></span>
+        <span>Speed: <span class="val" id="bottom-time">1.0x</span></span>
+    </div>
+
+    <!-- ================================================
+         PLACEMENT HINT
+         ================================================ -->
+    <div id="placement-hint">Click to place &middot; Hold for mass &middot; Drag for velocity</div>
+
+    <!-- ================================================
+         BACK TO PORTAL
+         ================================================ -->
+    <a id="back-btn" href="index.html">
+        <span>&#8592;</span> Back to Galaxy
+    </a>
+
+    <!-- ================================================
+         SCRIPTS
+         ================================================ -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { GravityPlayground } from './js/GravityPlayground.js';
+
+        const playground = new GravityPlayground();
+
+        // Load binary stars as a nice default
+        playground.loadPreset('binary');
+    </script>
+
+    <script type="module">
+        import { initNavigation } from './js/nav.js?v=1';
+        initNavigation({ activePage: 'gravity' });
+    </script>
+</body>
+</html>

@@ -1,7 +1,39 @@
 /* ============================================
    UNIVERSE SCALE SIMULATION STYLES
    Powers of Ten Journey
+   Enhanced with shared design tokens
    ============================================ */
+
+/* ============================================
+   DESIGN TOKENS (shared with main styles)
+   ============================================ */
+
+:root {
+    --color-primary: #4488ff;
+    --color-secondary: #8844ff;
+    --color-accent: #44ddff;
+    --color-warm: #ff8844;
+    --color-surface: rgba(10, 15, 30, 0.85);
+    --color-surface-hover: rgba(20, 25, 50, 0.9);
+    --color-surface-deep: rgba(5, 8, 20, 0.95);
+    --border-glow: rgba(100, 150, 255, 0.3);
+    --border-glow-strong: rgba(100, 150, 255, 0.6);
+    --border-glow-subtle: rgba(100, 150, 255, 0.12);
+    --text-primary: rgba(255, 255, 255, 0.92);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-pill: 50px;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(100, 150, 255, 0.06);
+    --font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+}
 
 * {
     margin: 0;
@@ -12,9 +44,27 @@
 body {
     overflow: hidden;
     background: #000;
-    font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-    color: #fff;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
+
+/* ============================================
+   GLOBAL SCROLLBAR & FOCUS
+   ============================================ */
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--color-primary), var(--color-secondary)); border-radius: 3px; }
+* { scrollbar-width: thin; scrollbar-color: rgba(100,150,255,0.4) rgba(255,255,255,0.03); }
+
+:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
 
 /* ============================================
    ANIMATIONS
@@ -57,7 +107,7 @@ body {
 
 @keyframes borderPulse {
     0%, 100% {
-        border-color: rgba(100, 180, 255, 0.3);
+        border-color: var(--border-glow);
     }
     50% {
         border-color: rgba(150, 100, 255, 0.5);
@@ -72,6 +122,19 @@ body {
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-5px); }
+}
+
+@keyframes scaleTextReveal {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        filter: blur(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
 }
 
 /* ============================================
@@ -92,18 +155,18 @@ body {
 }
 
 /* ============================================
-   SCALE INFO PANEL
+   SCALE INFO PANEL (Enhanced)
    ============================================ */
 
 #scale-info {
     position: fixed;
-    top: 40px;
+    top: 60px;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
     z-index: 100;
     pointer-events: none;
-    animation: fadeInUp 1s ease-out;
+    animation: fadeInUp 1s var(--ease-out);
 }
 
 .scale-name {
@@ -119,7 +182,7 @@ body {
     animation: shimmer 4s linear infinite;
     text-shadow: 0 0 60px rgba(100, 180, 255, 0.5);
     margin-bottom: 12px;
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.8s var(--ease-in-out);
 }
 
 .scale-size {
@@ -127,10 +190,10 @@ body {
     font-weight: 300;
     color: rgba(255, 200, 100, 0.9);
     letter-spacing: 2px;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     text-shadow: 0 0 20px rgba(255, 200, 100, 0.5);
     margin-bottom: 16px;
-    transition: all 0.5s ease;
+    transition: all 0.5s var(--ease-in-out);
 }
 
 .scale-size sup {
@@ -141,15 +204,15 @@ body {
 .scale-description {
     font-size: 14px;
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-secondary);
     letter-spacing: 1px;
     max-width: 500px;
     line-height: 1.6;
-    transition: all 0.5s ease;
+    transition: all 0.5s var(--ease-in-out);
 }
 
 /* ============================================
-   POWERS OF TEN COUNTER
+   POWERS OF TEN COUNTER (Enhanced)
    ============================================ */
 
 #powers-counter {
@@ -160,12 +223,20 @@ body {
     z-index: 100;
     pointer-events: none;
     animation: fadeIn 1.5s ease-out;
+    /* Glass card background */
+    background: rgba(10, 15, 30, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glow-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-panel);
 }
 
 .powers-label {
     font-size: 10px;
     letter-spacing: 4px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-muted);
     text-transform: uppercase;
     margin-bottom: 8px;
 }
@@ -174,10 +245,10 @@ body {
     font-size: 72px;
     font-weight: 100;
     color: rgba(125, 180, 255, 0.9);
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     text-shadow: 0 0 40px rgba(100, 180, 255, 0.5);
     line-height: 1;
-    transition: all 0.3s ease;
+    transition: all 0.3s var(--ease-in-out);
 }
 
 .powers-value sup {
@@ -189,13 +260,13 @@ body {
 .powers-unit {
     font-size: 12px;
     letter-spacing: 3px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
     text-transform: uppercase;
     margin-top: 8px;
 }
 
 /* ============================================
-   PROGRESS BAR
+   PROGRESS BAR (Enhanced)
    ============================================ */
 
 #progress-container {
@@ -206,18 +277,23 @@ body {
     width: 60%;
     max-width: 800px;
     height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 2px;
     z-index: 100;
     overflow: visible;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
 #progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #7db4ff, #c4a0ff, #ffb464);
+    background: linear-gradient(90deg,
+        var(--color-primary),
+        var(--color-secondary),
+        var(--color-warm)
+    );
     border-radius: 2px;
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.5s var(--ease-in-out);
     box-shadow: 0 0 20px rgba(125, 180, 255, 0.5);
     position: relative;
 }
@@ -232,7 +308,10 @@ body {
     height: 12px;
     background: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 0 12px rgba(255, 255, 255, 0.6),
+        0 0 24px rgba(100, 180, 255, 0.4);
+    transition: box-shadow 0.3s ease;
 }
 
 #progress-markers {
@@ -249,18 +328,19 @@ body {
     top: -8px;
     width: 2px;
     height: 20px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     transform: translateX(-50%);
+    transition: background 0.3s ease;
 }
 
 .progress-marker.major {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.35);
     height: 24px;
     top: -10px;
 }
 
 /* ============================================
-   NAVIGATION CONTROLS
+   NAVIGATION CONTROLS (Enhanced)
    ============================================ */
 
 #nav-controls {
@@ -271,35 +351,45 @@ body {
     display: flex;
     gap: 16px;
     z-index: 100;
-    animation: fadeInUp 1s ease-out 0.5s both;
+    animation: fadeInUp 1s var(--ease-out) 0.5s both;
 }
 
 .nav-btn {
     width: 56px;
     height: 56px;
-    background: rgba(10, 15, 35, 0.9);
+    background: var(--color-surface);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(100, 150, 255, 0.3);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-glow);
     border-radius: 50%;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     font-size: 20px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s var(--ease-in-out);
     display: flex;
     align-items: center;
     justify-content: center;
     animation: borderPulse 3s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
 }
 
 .nav-btn:hover {
     background: rgba(100, 150, 255, 0.2);
-    border-color: rgba(125, 180, 255, 0.6);
+    border-color: var(--border-glow-strong);
     transform: scale(1.1);
     box-shadow: 0 0 30px rgba(100, 150, 255, 0.4);
+    color: var(--text-primary);
 }
 
 .nav-btn:active {
     transform: scale(0.95);
+    transition-duration: 0.1s;
+}
+
+.nav-btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
 }
 
 .nav-btn .arrow {
@@ -309,12 +399,16 @@ body {
 #btn-play {
     width: 72px;
     height: 72px;
-    background: linear-gradient(135deg, rgba(100, 150, 255, 0.2), rgba(150, 100, 255, 0.15));
-    border-color: rgba(125, 180, 255, 0.5);
+    background: linear-gradient(135deg, rgba(68, 136, 255, 0.18), rgba(136, 68, 255, 0.12));
+    border-color: rgba(125, 180, 255, 0.45);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 #btn-play:hover {
-    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3), rgba(150, 100, 255, 0.25));
+    background: linear-gradient(135deg, rgba(68, 136, 255, 0.28), rgba(136, 68, 255, 0.22));
+    box-shadow:
+        0 0 30px rgba(100, 150, 255, 0.4),
+        0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 #btn-play.playing .play-icon {
@@ -326,7 +420,7 @@ body {
 }
 
 /* ============================================
-   SCALE SLIDER
+   SCALE SLIDER (Enhanced)
    ============================================ */
 
 #scale-slider-container {
@@ -343,10 +437,15 @@ body {
     height: 6px;
     -webkit-appearance: none;
     appearance: none;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
     outline: none;
     cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#scale-slider:hover {
+    background: rgba(255, 255, 255, 0.12);
 }
 
 #scale-slider::-webkit-slider-thumb {
@@ -357,13 +456,17 @@ body {
     background: linear-gradient(135deg, #7db4ff, #c4a0ff);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 20px rgba(125, 180, 255, 0.6);
-    transition: all 0.2s ease;
+    box-shadow:
+        0 0 14px rgba(125, 180, 255, 0.5),
+        0 0 28px rgba(125, 180, 255, 0.25);
+    transition: all 0.2s var(--ease-spring);
 }
 
 #scale-slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 0 30px rgba(125, 180, 255, 0.8);
+    box-shadow:
+        0 0 20px rgba(125, 180, 255, 0.7),
+        0 0 40px rgba(125, 180, 255, 0.35);
 }
 
 #scale-slider::-moz-range-thumb {
@@ -373,6 +476,15 @@ body {
     border-radius: 50%;
     cursor: pointer;
     border: none;
+    box-shadow:
+        0 0 14px rgba(125, 180, 255, 0.5),
+        0 0 28px rgba(125, 180, 255, 0.25);
+}
+
+#scale-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+        0 0 0 3px var(--color-accent),
+        0 0 20px rgba(125, 180, 255, 0.7);
 }
 
 .slider-labels {
@@ -380,23 +492,24 @@ body {
     justify-content: space-between;
     margin-top: 8px;
     font-size: 9px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 /* ============================================
-   GALAXY BUTTON
+   GALAXY BUTTON (Enhanced)
    ============================================ */
 
 #btn-galaxy {
     position: fixed;
-    top: 30px;
+    top: 60px;
     left: 30px;
-    background: linear-gradient(135deg, rgba(10, 15, 35, 0.95), rgba(20, 25, 50, 0.9));
+    background: linear-gradient(135deg, var(--color-surface-deep), var(--color-surface));
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(100, 150, 255, 0.3);
-    border-radius: 30px;
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-glow);
+    border-radius: var(--radius-pill);
     padding: 12px 24px;
     color: #7db4ff;
     font-size: 11px;
@@ -408,15 +521,23 @@ body {
     align-items: center;
     gap: 10px;
     z-index: 100;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s var(--ease-in-out);
     animation: fadeIn 1s ease-out;
+    box-shadow: var(--shadow-panel);
+    outline: 1px solid rgba(255, 255, 255, 0.03);
+    outline-offset: -1px;
 }
 
 #btn-galaxy:hover {
-    background: linear-gradient(135deg, rgba(100, 150, 255, 0.2), rgba(150, 100, 255, 0.15));
-    border-color: rgba(125, 180, 255, 0.6);
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.15), rgba(150, 100, 255, 0.1));
+    border-color: var(--border-glow-strong);
     box-shadow: 0 0 30px rgba(100, 150, 255, 0.3);
     transform: translateY(-2px);
+}
+
+#btn-galaxy:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
 }
 
 .galaxy-icon {
@@ -424,7 +545,7 @@ body {
 }
 
 /* ============================================
-   KEYBOARD SHORTCUTS HELP
+   KEYBOARD SHORTCUTS HELP (Enhanced)
    ============================================ */
 
 #shortcuts-help {
@@ -432,35 +553,50 @@ body {
     bottom: 30px;
     right: 30px;
     z-index: 100;
-    opacity: 0.4;
+    opacity: 0.35;
     transition: opacity 0.3s ease;
     animation: fadeIn 2s ease-out;
+    /* Glass card */
+    background: rgba(10, 15, 30, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
 }
 
 #shortcuts-help:hover {
-    opacity: 0.8;
+    opacity: 0.85;
+    border-color: var(--border-glow-subtle);
 }
 
 .shortcut {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-secondary);
     margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
+.shortcut:last-child {
+    margin-bottom: 0;
+}
+
 .shortcut kbd {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 4px;
     padding: 2px 6px;
-    font-family: inherit;
+    font-family: var(--font-mono);
     font-size: 9px;
+    color: var(--text-primary);
+    min-width: 24px;
+    text-align: center;
 }
 
 /* ============================================
-   LOADING SCREEN
+   LOADING SCREEN (Enhanced)
    ============================================ */
 
 #loading-screen {
@@ -474,7 +610,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 1s ease-out;
+    transition: opacity 1s var(--ease-in-out);
 }
 
 #loading-screen.hidden {
@@ -490,7 +626,7 @@ body {
     font-size: 48px;
     font-weight: 100;
     letter-spacing: 20px;
-    background: linear-gradient(135deg, #ffffff 0%, #7db4ff 50%, #c4a0ff 100%);
+    background: linear-gradient(135deg, #ffffff 0%, var(--color-primary) 50%, var(--color-secondary) 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -502,7 +638,7 @@ body {
 .loading-subtitle {
     font-size: 14px;
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
     letter-spacing: 4px;
     margin-bottom: 40px;
 }
@@ -510,7 +646,7 @@ body {
 .loading-bar {
     width: 300px;
     height: 2px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 1px;
     margin: 0 auto 20px;
     overflow: hidden;
@@ -519,7 +655,7 @@ body {
 .loading-progress {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #7db4ff, #c4a0ff);
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
     border-radius: 1px;
     transition: width 0.3s ease;
     animation: loadingPulse 1s ease-in-out infinite;
@@ -527,7 +663,7 @@ body {
 
 .loading-text {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-muted);
     letter-spacing: 2px;
 }
 
@@ -545,7 +681,7 @@ body {
     pointer-events: none;
     z-index: 50;
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s var(--ease-in-out);
 }
 
 .scale-transition-overlay.active {
@@ -553,7 +689,7 @@ body {
 }
 
 /* ============================================
-   SCALE CATEGORY INDICATORS
+   SCALE CATEGORY INDICATORS (Enhanced)
    ============================================ */
 
 .scale-category {
@@ -568,17 +704,18 @@ body {
 .category-item {
     font-size: 10px;
     letter-spacing: 2px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--text-dim, rgba(255, 255, 255, 0.2));
     text-transform: uppercase;
     margin-bottom: 12px;
     padding-left: 16px;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.5s ease;
+    border-left: 2px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.5s var(--ease-in-out);
 }
 
 .category-item.active {
     color: rgba(125, 180, 255, 0.9);
     border-left-color: rgba(125, 180, 255, 0.8);
+    text-shadow: 0 0 12px rgba(125, 180, 255, 0.3);
 }
 
 /* ============================================
@@ -624,7 +761,7 @@ body {
 
 @media (max-width: 768px) {
     #scale-info {
-        top: 30px;
+        top: 60px;
         padding: 0 20px;
     }
 
@@ -644,6 +781,7 @@ body {
     #powers-counter {
         bottom: 160px;
         right: 20px;
+        padding: 12px 14px;
     }
 
     .powers-value {
@@ -708,7 +846,28 @@ body {
 }
 
 /* ============================================
-   SPECIAL SCALE THEMES
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    #nav-controls,
+    #progress-container,
+    #powers-counter,
+    #scale-slider-container,
+    #shortcuts-help,
+    #btn-galaxy,
+    #loading-screen,
+    .scale-category,
+    .scale-transition-overlay,
+    .particle-overlay,
+    .galaxy-nav,
+    .galaxy-nav-trigger {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   SPECIAL SCALE THEMES (Enhanced)
    ============================================ */
 
 /* Quantum Scale Theme */
@@ -723,6 +882,10 @@ body.quantum-theme .scale-name {
     -webkit-text-fill-color: transparent;
 }
 
+body.quantum-theme #progress-bar {
+    background: linear-gradient(90deg, #64ffda, #00bcd4, #7c4dff);
+}
+
 /* Molecular Scale Theme */
 body.molecular-theme {
     --accent-color: rgba(255, 100, 150, 0.8);
@@ -733,6 +896,10 @@ body.molecular-theme .scale-name {
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+body.molecular-theme #progress-bar {
+    background: linear-gradient(90deg, #ff6b9d, #c44569, #7c4dff);
 }
 
 /* Macro Scale Theme */
@@ -747,6 +914,10 @@ body.macro-theme .scale-name {
     -webkit-text-fill-color: transparent;
 }
 
+body.macro-theme #progress-bar {
+    background: linear-gradient(90deg, #69f0ae, #00e676, #00bcd4);
+}
+
 /* Planetary Scale Theme */
 body.planetary-theme {
     --accent-color: rgba(100, 150, 255, 0.8);
@@ -759,6 +930,10 @@ body.planetary-theme .scale-name {
     -webkit-text-fill-color: transparent;
 }
 
+body.planetary-theme #progress-bar {
+    background: linear-gradient(90deg, #448aff, #536dfe, #7c4dff);
+}
+
 /* Cosmic Scale Theme */
 body.cosmic-theme {
     --accent-color: rgba(200, 150, 255, 0.8);
@@ -769,4 +944,8 @@ body.cosmic-theme .scale-name {
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+body.cosmic-theme #progress-bar {
+    background: linear-gradient(90deg, #e040fb, #7c4dff, #536dfe);
 }

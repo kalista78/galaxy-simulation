@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Evolution - From the Big Bang to Heat Death</title>
+    <link rel="stylesheet" href="evolution.css?v=1">
+    <link rel="stylesheet" href="nav.css?v=1">
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <h1>Cosmic Evolution</h1>
+        <p>13.8 billion years in the making</p>
+        <div class="loading-bar-container">
+            <div class="loading-bar-fill"></div>
+        </div>
+    </div>
+
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Epoch Title Overlay (cinematic) -->
+    <div id="epoch-title-overlay">
+        <div class="big-title">The Singularity</div>
+        <div class="big-subtitle">t = 0</div>
+    </div>
+
+    <!-- "You Are Here" indicator for Present Day -->
+    <div id="you-are-here">
+        <div class="you-arrow">&#9663;</div>
+        <div class="you-text">You Are Here</div>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info-panel">
+        <div class="epoch-number">EPOCH 1 OF 11</div>
+        <div class="epoch-name">The Singularity</div>
+        <div class="epoch-divider"></div>
+        <div class="epoch-stats">
+            <div class="stat-item">
+                <span class="stat-label">Cosmic Time</span>
+                <span class="stat-value" id="stat-time">t = 0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Temperature</span>
+                <span class="stat-value" id="stat-temp">~10&#x00b3;&#x00b2; K</span>
+            </div>
+        </div>
+        <div class="epoch-description">All matter, energy, space and time compressed into an infinitely dense point. The laws of physics as we know them break down.</div>
+    </div>
+
+    <!-- Back to Portal -->
+    <a id="btn-back" href="index.html">
+        <span class="arrow">&#8592;</span>
+        Back to Galaxy
+    </a>
+
+    <!-- Keyboard Hints -->
+    <div id="keyboard-hints">
+        <kbd>Space</kbd> Play / Pause<br>
+        <kbd>&#8592;</kbd> <kbd>&#8594;</kbd> Prev / Next Epoch<br>
+        <kbd>1</kbd>&ndash;<kbd>0</kbd> Jump to Epoch
+    </div>
+
+    <!-- Timeline -->
+    <div id="timeline-container">
+        <div id="timeline-controls">
+            <button id="btn-play-pause" title="Play / Pause">
+                <svg width="12" height="14" viewBox="0 0 12 14"><polygon points="2,1 11,7 2,13" fill="white"/></svg>
+            </button>
+            <div id="cosmic-time-display">Cosmic Time: t = 0</div>
+            <div id="speed-control">
+                <label>Speed</label>
+                <input type="range" id="speed-slider" min="0.2" max="3" step="0.1" value="1.0">
+                <span id="speed-val">1.0x</span>
+            </div>
+            <div id="temperature-display">T = ~10&#x00b3;&#x00b2; K</div>
+        </div>
+        <div id="timeline-track">
+            <div id="timeline-gradient"></div>
+            <div id="timeline-progress"></div>
+            <div id="timeline-cursor"></div>
+            <!-- Epoch markers are inserted by JS -->
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { CosmicEvolution } from './js/CosmicEvolution.js';
+        new CosmicEvolution();
+    </script>
+
+    <script type="module">
+        import { initNavigation } from './js/nav.js?v=1';
+        initNavigation({ activePage: 'evolution' });
+    </script>
+</body>
+</html>
