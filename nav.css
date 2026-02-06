@@ -1,0 +1,425 @@
+/* ============================================
+   SHARED NAVIGATION BAR
+   Floating glassmorphism nav for all pages
+   ============================================ */
+
+/* Navigation Variables */
+:root {
+    --nav-height: 44px;
+    --nav-bg: rgba(10, 15, 30, 0.8);
+    --nav-bg-hover: rgba(10, 15, 30, 0.92);
+    --nav-blur: 20px;
+    --nav-border: rgba(100, 150, 255, 0.2);
+    --nav-border-hover: rgba(100, 150, 255, 0.4);
+    --nav-glow: rgba(100, 150, 255, 0.15);
+    --nav-text: rgba(255, 255, 255, 0.6);
+    --nav-text-hover: rgba(255, 255, 255, 0.95);
+    --nav-active-glow: rgba(68, 136, 255, 0.7);
+    --nav-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    --nav-z: 9999;
+}
+
+/* ============================================
+   NAV ANIMATIONS
+   ============================================ */
+
+@keyframes navSlideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes navGlowPulse {
+    0%, 100% {
+        box-shadow:
+            0 4px 24px rgba(0, 0, 0, 0.3),
+            0 0 20px var(--nav-glow),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    50% {
+        box-shadow:
+            0 4px 24px rgba(0, 0, 0, 0.3),
+            0 0 30px rgba(100, 150, 255, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+}
+
+@keyframes activeGlow {
+    0%, 100% {
+        opacity: 0.7;
+        box-shadow: 0 0 8px var(--nav-active-glow);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 14px var(--nav-active-glow);
+    }
+}
+
+@keyframes hamburgerOpen {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+}
+
+/* ============================================
+   MAIN NAV BAR
+   ============================================ */
+
+.galaxy-nav {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--nav-z);
+    height: var(--nav-height);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 8px;
+    background: var(--nav-bg);
+    backdrop-filter: blur(var(--nav-blur));
+    -webkit-backdrop-filter: blur(var(--nav-blur));
+    border: 1px solid var(--nav-border);
+    border-radius: 22px;
+    animation: navSlideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+               navGlowPulse 6s ease-in-out infinite 1s;
+    transition: opacity var(--nav-transition),
+                transform var(--nav-transition),
+                background 0.3s ease,
+                border-color 0.3s ease;
+    font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    will-change: transform, opacity;
+}
+
+/* Shimmer top edge */
+.galaxy-nav::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(100, 180, 255, 0.4) 30%,
+        rgba(200, 150, 255, 0.6) 50%,
+        rgba(100, 180, 255, 0.4) 70%,
+        transparent 100%
+    );
+    border-radius: 1px;
+}
+
+/* Auto-hide state */
+.galaxy-nav.nav-hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-120%);
+    pointer-events: none;
+}
+
+/* Hover zone to bring nav back */
+.galaxy-nav-trigger {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    z-index: calc(var(--nav-z) - 1);
+    pointer-events: auto;
+}
+
+.galaxy-nav:hover {
+    background: var(--nav-bg-hover);
+    border-color: var(--nav-border-hover);
+}
+
+/* ============================================
+   NAV LINKS
+   ============================================ */
+
+.galaxy-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: var(--nav-text);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-radius: 14px;
+    transition: all 0.25s ease;
+    position: relative;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.galaxy-nav__link:hover {
+    color: var(--nav-text-hover);
+    background: rgba(100, 150, 255, 0.1);
+}
+
+.galaxy-nav__icon {
+    font-size: 15px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.galaxy-nav__label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+/* Active page indicator */
+.galaxy-nav__link.active {
+    color: var(--nav-text-hover);
+    background: rgba(68, 136, 255, 0.12);
+}
+
+.galaxy-nav__link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 2px;
+    background: var(--nav-active-glow);
+    border-radius: 1px;
+    animation: activeGlow 2.5s ease-in-out infinite;
+}
+
+/* ============================================
+   NAV DIVIDER
+   ============================================ */
+
+.galaxy-nav__divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(100, 150, 255, 0.15);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   HAMBURGER MENU (MOBILE)
+   ============================================ */
+
+.galaxy-nav__hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.galaxy-nav__hamburger-line {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 1px;
+    transition: all 0.3s ease;
+    position: absolute;
+}
+
+.galaxy-nav__hamburger-line:nth-child(1) {
+    transform: translateY(-5px);
+}
+
+.galaxy-nav__hamburger-line:nth-child(3) {
+    transform: translateY(5px);
+}
+
+/* Hamburger open state */
+.galaxy-nav__hamburger.open .galaxy-nav__hamburger-line:nth-child(1) {
+    transform: rotate(45deg);
+}
+
+.galaxy-nav__hamburger.open .galaxy-nav__hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.galaxy-nav__hamburger.open .galaxy-nav__hamburger-line:nth-child(3) {
+    transform: rotate(-45deg);
+}
+
+/* Mobile branding (shown next to hamburger) */
+.galaxy-nav__brand {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    color: var(--nav-text-hover);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.galaxy-nav__brand-icon {
+    font-size: 16px;
+}
+
+/* ============================================
+   MOBILE DROPDOWN
+   ============================================ */
+
+.galaxy-nav__dropdown {
+    display: none;
+    position: absolute;
+    top: calc(var(--nav-height) + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 200px;
+    background: var(--nav-bg-hover);
+    backdrop-filter: blur(var(--nav-blur));
+    -webkit-backdrop-filter: blur(var(--nav-blur));
+    border: 1px solid var(--nav-border);
+    border-radius: 16px;
+    padding: 8px;
+    flex-direction: column;
+    gap: 2px;
+    animation: hamburgerOpen 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top center;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
+                0 0 20px var(--nav-glow);
+}
+
+.galaxy-nav__dropdown::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(100, 180, 255, 0.4),
+        transparent
+    );
+}
+
+.galaxy-nav__dropdown.open {
+    display: flex;
+}
+
+.galaxy-nav__dropdown .galaxy-nav__link {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.galaxy-nav__dropdown .galaxy-nav__icon {
+    font-size: 17px;
+    width: 24px;
+    text-align: center;
+}
+
+.galaxy-nav__dropdown .galaxy-nav__label {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+}
+
+.galaxy-nav__dropdown .galaxy-nav__link:hover {
+    background: rgba(100, 150, 255, 0.15);
+}
+
+.galaxy-nav__dropdown .galaxy-nav__link.active {
+    background: rgba(68, 136, 255, 0.15);
+}
+
+.galaxy-nav__dropdown .galaxy-nav__link.active::after {
+    display: none;
+}
+
+.galaxy-nav__dropdown .galaxy-nav__link.active::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    background: var(--nav-active-glow);
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--nav-active-glow);
+}
+
+/* ============================================
+   DESKTOP NAV LINKS CONTAINER
+   ============================================ */
+
+.galaxy-nav__links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* ============================================
+   RESPONSIVE: MOBILE BREAKPOINT
+   ============================================ */
+
+@media (max-width: 768px) {
+    .galaxy-nav {
+        top: 8px;
+        padding: 0 10px;
+        gap: 6px;
+        border-radius: 18px;
+    }
+
+    .galaxy-nav__links {
+        display: none;
+    }
+
+    .galaxy-nav__hamburger {
+        display: flex;
+    }
+
+    .galaxy-nav__brand {
+        display: flex;
+    }
+
+    .galaxy-nav__divider {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .galaxy-nav {
+        top: 6px;
+    }
+
+    .galaxy-nav__dropdown {
+        min-width: 180px;
+    }
+}
+
+/* ============================================
+   COMPACT MODE (for very narrow screens)
+   ============================================ */
+
+@media (max-width: 900px) and (min-width: 769px) {
+    .galaxy-nav__label {
+        display: none;
+    }
+
+    .galaxy-nav__link {
+        padding: 6px 9px;
+    }
+
+    .galaxy-nav__icon {
+        font-size: 17px;
+    }
+}
