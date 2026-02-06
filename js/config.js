@@ -20,10 +20,10 @@ export const GALAXY_CONFIG = {
     armWidth: 18,                 // Width of spiral arms
 
     // Particle counts
-    diskStars: 220000,            // Main disk population
-    bulgeStars: 50000,            // Central bulge
-    haloStars: 15000,             // Halo and globular clusters
-    dustParticles: 25000,         // Dark dust lanes
+    diskStars: 640000,            // Main disk population (double density for rich smooth look)
+    bulgeStars: 130000,           // Central bulge (dense warm golden mass)
+    haloStars: 36000,             // Halo and globular clusters
+    dustParticles: 50000,         // Dark dust lanes
 
     // Rotation (differential rotation - Keplerian-like)
     baseRotationSpeed: 0.15,   // Base angular velocity (increased for visible rotation)
@@ -79,171 +79,304 @@ export const BLACK_HOLE_JOURNEY_PHASES = [
 ];
 
 // ============================================================
-// CINEMATIC TOUR SEQUENCES (~1 min total) - ULTRA DYNAMIC
+// CINEMATIC TOUR SEQUENCES (~90s total) - FULL CINEMATIC EXPERIENCE
+// Each sequence has effects for dynamic post-processing control
 // ============================================================
 export const TOUR_SEQUENCES = [
     {
-        name: 'opening_pan',
+        name: 'the_awakening',
         displayName: 'The Awakening',
-        duration: 6,
+        subtitle: '200,000 light-years across... a galaxy of 400 billion stars',
+        duration: 7,
         speed: 'slow',
         cameraRoll: 0,
-        shake: 0,
+        shake: 0.08,
+        effects: {
+            bloom: 0.7,
+            bloomThreshold: 0.35,
+            vignette: 0.5,
+            chromatic: 0.2,
+            coreGlow: 1.0,
+            speedLines: 0.0,
+            timeScale: 0.8,
+            meteorRate: 0.5,
+            grain: 0.02
+        },
         waypoints: [
-            { pos: [0, 400, 50], target: [0, 0, 0], fov: 45, roll: 0 },
-            { pos: [80, 350, 150], target: [20, 0, 20], fov: 50, roll: 3 },
-            { pos: [180, 280, 220], target: [40, 0, 60], fov: 55, roll: 0 }
+            { pos: [0, 450, 30], target: [0, 0, 0], fov: 40, roll: 0 },
+            { pos: [60, 420, 100], target: [10, 0, 10], fov: 44, roll: 2 },
+            { pos: [140, 350, 200], target: [30, 0, 40], fov: 48, roll: 0 }
         ],
         audioMood: 'ambient'
     },
     {
-        name: 'spiral_dive',
-        displayName: 'Into The Spiral',
-        duration: 5,
+        name: 'descent_into_spiral',
+        displayName: 'Descent Into the Spiral',
+        subtitle: 'Diving into the Perseus Arm... where young blue giants blaze',
+        duration: 7,
         speed: 'accelerating',
         cameraRoll: 15,
-        shake: 0.3,
+        shake: 0.2,
+        effects: {
+            bloom: 0.8,
+            bloomThreshold: 0.3,
+            vignette: 0.35,
+            chromatic: 0.4,
+            coreGlow: 1.1,
+            speedLines: 0.15,
+            timeScale: 1.2,
+            meteorRate: 1.0,
+            grain: 0.02
+        },
         waypoints: [
-            { pos: [180, 280, 220], target: [40, 0, 60], fov: 55, roll: 0 },
-            { pos: [140, 150, 160], target: [70, 0, 80], fov: 65, roll: 8 },
-            { pos: [100, 60, 100], target: [80, 0, 90], fov: 78, roll: 15 },
-            { pos: [70, 25, 70], target: [60, -5, 65], fov: 85, roll: 5 }
+            { pos: [140, 350, 200], target: [30, 0, 40], fov: 48, roll: 0 },
+            { pos: [130, 180, 150], target: [60, 0, 70], fov: 58, roll: 6 },
+            { pos: [100, 70, 100], target: [75, 0, 85], fov: 72, roll: 12 },
+            { pos: [70, 20, 65], target: [55, -3, 55], fov: 82, roll: 4 }
         ],
         audioMood: 'building'
     },
     {
-        name: 'star_rush',
+        name: 'stellar_highway',
         displayName: 'Stellar Highway',
-        duration: 5,
+        subtitle: 'Threading through the Scutum-Centaurus Arm at 10,000 km/s',
+        duration: 6,
         speed: 'fast',
         cameraRoll: 25,
-        shake: 0.6,
+        shake: 0.4,
+        effects: {
+            bloom: 1.0,
+            bloomThreshold: 0.25,
+            vignette: 0.3,
+            chromatic: 0.7,
+            coreGlow: 1.2,
+            speedLines: 0.5,
+            timeScale: 2.0,
+            meteorRate: 3.0,
+            grain: 0.025
+        },
         waypoints: [
-            { pos: [70, 25, 70], target: [60, -5, 65], fov: 85, roll: 5 },
-            { pos: [40, 15, 50], target: [20, 0, 30], fov: 95, roll: -12 },
-            { pos: [-20, 20, 80], target: [-30, 0, 60], fov: 90, roll: 18 },
-            { pos: [-60, 35, 100], target: [-40, 0, 70], fov: 80, roll: -8 }
+            { pos: [70, 20, 65], target: [55, -3, 55], fov: 82, roll: 4 },
+            { pos: [35, 12, 45], target: [15, 0, 25], fov: 95, roll: -14 },
+            { pos: [-25, 18, 75], target: [-35, 0, 55], fov: 90, roll: 20 },
+            { pos: [-65, 30, 95], target: [-45, 0, 65], fov: 82, roll: -10 }
         ],
         audioMood: 'intense'
     },
     {
-        name: 'weaving_arms',
-        displayName: 'Dancing Through Arms',
-        duration: 6,
+        name: 'among_the_stars',
+        displayName: 'Among the Stars',
+        subtitle: 'Where new stars are born in cosmic nurseries',
+        duration: 5,
         speed: 'medium',
-        cameraRoll: 20,
-        shake: 0.4,
+        cameraRoll: 18,
+        shake: 0.25,
+        effects: {
+            bloom: 0.9,
+            bloomThreshold: 0.28,
+            vignette: 0.25,
+            chromatic: 0.35,
+            coreGlow: 1.15,
+            speedLines: 0.1,
+            timeScale: 1.5,
+            meteorRate: 1.5,
+            grain: 0.018
+        },
         waypoints: [
-            { pos: [-60, 35, 100], target: [-40, 0, 70], fov: 80, roll: -8 },
-            { pos: [-100, 50, 60], target: [-80, 5, 30], fov: 70, roll: 12 },
-            { pos: [-80, 40, -30], target: [-50, 0, -50], fov: 75, roll: -15 },
-            { pos: [-40, 55, -80], target: [-20, 0, -40], fov: 68, roll: 5 }
+            { pos: [-65, 30, 95], target: [-45, 0, 65], fov: 82, roll: -10 },
+            { pos: [-100, 45, 55], target: [-75, 3, 25], fov: 72, roll: 10 },
+            { pos: [-85, 35, -25], target: [-55, 0, -45], fov: 76, roll: -12 },
+            { pos: [-45, 50, -75], target: [-25, 0, -35], fov: 68, roll: 4 }
         ],
         audioMood: 'building'
     },
     {
-        name: 'core_approach',
-        displayName: 'Heart of the Galaxy',
-        duration: 7,
+        name: 'heart_of_darkness',
+        displayName: 'Heart of Darkness',
+        subtitle: '4 million solar masses... Sagittarius A*',
+        duration: 8,
         speed: 'decelerating',
-        cameraRoll: 10,
-        shake: 0.2,
+        cameraRoll: 8,
+        shake: 0.15,
+        effects: {
+            bloom: 1.2,
+            bloomThreshold: 0.2,
+            vignette: 0.6,
+            chromatic: 0.5,
+            coreGlow: 1.6,
+            speedLines: 0.0,
+            timeScale: 0.6,
+            meteorRate: 0.2,
+            grain: 0.03
+        },
         waypoints: [
-            { pos: [-40, 55, -80], target: [-20, 0, -40], fov: 68, roll: 5 },
-            { pos: [-20, 70, -50], target: [0, 0, 0], fov: 60, roll: -3 },
-            { pos: [10, 90, -20], target: [0, 0, 0], fov: 55, roll: 0 },
-            { pos: [25, 100, 15], target: [0, 0, 0], fov: 50, roll: 2 }
+            { pos: [-45, 50, -75], target: [-25, 0, -35], fov: 68, roll: 4 },
+            { pos: [-25, 65, -45], target: [0, 0, 0], fov: 58, roll: -2 },
+            { pos: [5, 80, -15], target: [0, 0, 0], fov: 52, roll: 0 },
+            { pos: [20, 95, 10], target: [0, 0, 0], fov: 48, roll: 1 }
         ],
         audioMood: 'epic'
     },
     {
-        name: 'black_hole_descent',
+        name: 'event_horizon',
         displayName: 'Event Horizon',
+        subtitle: 'The point of no return... time itself begins to warp',
         duration: 8,
         speed: 'slow_dramatic',
-        cameraRoll: 8,
-        shake: 0.8,
+        cameraRoll: 6,
+        shake: 0.5,
+        effects: {
+            bloom: 1.5,
+            bloomThreshold: 0.15,
+            vignette: 0.7,
+            chromatic: 0.8,
+            coreGlow: 2.0,
+            speedLines: 0.0,
+            timeScale: 0.3,
+            meteorRate: 0.1,
+            grain: 0.04
+        },
         waypoints: [
-            { pos: [25, 100, 15], target: [0, 0, 0], fov: 50, roll: 2 },
-            { pos: [20, 60, 20], target: [0, 0, 0], fov: 48, roll: -2 },
-            { pos: [15, 35, 18], target: [0, 0, 0], fov: 45, roll: 3 },
-            { pos: [10, 18, 14], target: [0, 0, 0], fov: 42, roll: -1 },
-            { pos: [8, 10, 10], target: [0, 0, 0], fov: 38, roll: 0 }
+            { pos: [20, 95, 10], target: [0, 0, 0], fov: 48, roll: 1 },
+            { pos: [18, 55, 16], target: [0, 0, 0], fov: 45, roll: -3 },
+            { pos: [14, 30, 14], target: [0, 0, 0], fov: 42, roll: 4 },
+            { pos: [10, 16, 10], target: [0, 0, 0], fov: 38, roll: -2 },
+            { pos: [7, 8, 7], target: [0, 0, 0], fov: 35, roll: 0 }
         ],
         audioMood: 'tension'
     },
     {
-        name: 'escape_velocity',
-        displayName: 'Breaking Free',
+        name: 'slingshot',
+        displayName: 'Slingshot',
+        subtitle: 'Escaping at 30,000 km/s... breaking free of the abyss',
         duration: 5,
         speed: 'explosive',
-        cameraRoll: 35,
-        shake: 1.0,
+        cameraRoll: 40,
+        shake: 0.8,
+        effects: {
+            bloom: 1.3,
+            bloomThreshold: 0.2,
+            vignette: 0.3,
+            chromatic: 1.0,
+            coreGlow: 1.8,
+            speedLines: 0.9,
+            timeScale: 3.0,
+            meteorRate: 4.0,
+            grain: 0.03
+        },
         waypoints: [
-            { pos: [8, 10, 10], target: [0, 0, 0], fov: 38, roll: 0 },
-            { pos: [25, 40, 35], target: [5, 0, 5], fov: 55, roll: -20 },
-            { pos: [80, 120, 100], target: [20, 0, 30], fov: 70, roll: 25 },
-            { pos: [150, 220, 180], target: [30, 0, 40], fov: 62, roll: 5 }
+            { pos: [7, 8, 7], target: [0, 0, 0], fov: 35, roll: 0 },
+            { pos: [30, 50, 40], target: [8, 0, 8], fov: 60, roll: -25 },
+            { pos: [90, 140, 110], target: [25, 0, 35], fov: 75, roll: 30 },
+            { pos: [160, 240, 190], target: [35, 0, 45], fov: 65, roll: 8 }
         ],
         audioMood: 'epic'
     },
     {
-        name: 'outer_rim_cruise',
-        displayName: 'Edge of Infinity',
-        duration: 6,
+        name: 'edge_of_galaxy',
+        displayName: 'Edge of the Galaxy',
+        subtitle: 'The outer rim... where stars grow sparse and darkness reigns',
+        duration: 7,
         speed: 'cruising',
-        cameraRoll: 12,
-        shake: 0.2,
+        cameraRoll: 10,
+        shake: 0.12,
+        effects: {
+            bloom: 0.7,
+            bloomThreshold: 0.35,
+            vignette: 0.4,
+            chromatic: 0.25,
+            coreGlow: 1.0,
+            speedLines: 0.1,
+            timeScale: 1.0,
+            meteorRate: 0.8,
+            grain: 0.02
+        },
         waypoints: [
-            { pos: [150, 220, 180], target: [30, 0, 40], fov: 62, roll: 5 },
-            { pos: [200, 150, 100], target: [120, 0, 50], fov: 58, roll: -6 },
-            { pos: [220, 100, -40], target: [140, 0, -20], fov: 55, roll: 8 },
-            { pos: [200, 120, -120], target: [100, 0, -80], fov: 52, roll: -4 }
+            { pos: [160, 240, 190], target: [35, 0, 45], fov: 65, roll: 8 },
+            { pos: [210, 160, 100], target: [130, 0, 50], fov: 58, roll: -5 },
+            { pos: [230, 110, -50], target: [150, 0, -25], fov: 55, roll: 6 },
+            { pos: [210, 130, -130], target: [110, 0, -80], fov: 52, roll: -3 }
         ],
         audioMood: 'ambient'
     },
     {
-        name: 'barrel_roll',
+        name: 'cosmic_roll',
         displayName: 'Cosmic Roll',
-        duration: 4,
+        subtitle: 'A barrel roll across the cosmos... the galaxy in full view',
+        duration: 5,
         speed: 'fast',
         cameraRoll: 360,
-        shake: 0.5,
+        shake: 0.35,
+        effects: {
+            bloom: 0.85,
+            bloomThreshold: 0.3,
+            vignette: 0.35,
+            chromatic: 0.5,
+            coreGlow: 1.2,
+            speedLines: 0.3,
+            timeScale: 1.5,
+            meteorRate: 2.0,
+            grain: 0.02
+        },
         waypoints: [
-            { pos: [200, 120, -120], target: [100, 0, -80], fov: 52, roll: 0 },
-            { pos: [150, 100, -160], target: [50, 0, -100], fov: 60, roll: 90 },
-            { pos: [80, 90, -180], target: [0, 0, -100], fov: 65, roll: 180 },
-            { pos: [0, 100, -150], target: [-30, 0, -60], fov: 60, roll: 270 },
-            { pos: [-50, 130, -100], target: [0, 0, 0], fov: 55, roll: 360 }
+            { pos: [210, 130, -130], target: [110, 0, -80], fov: 52, roll: 0 },
+            { pos: [160, 110, -170], target: [55, 0, -100], fov: 60, roll: 90 },
+            { pos: [85, 100, -190], target: [0, 0, -100], fov: 64, roll: 180 },
+            { pos: [5, 110, -160], target: [-25, 0, -65], fov: 60, roll: 270 },
+            { pos: [-45, 140, -110], target: [0, 0, 0], fov: 55, roll: 360 }
         ],
         audioMood: 'intense'
     },
     {
-        name: 'vertical_ascent',
-        displayName: 'Ascending',
-        duration: 4,
+        name: 'the_grand_view',
+        displayName: 'The Grand View',
+        subtitle: 'Our galaxy... an island of light in an ocean of darkness',
+        duration: 6,
         speed: 'accelerating',
-        cameraRoll: 15,
-        shake: 0.4,
+        cameraRoll: 12,
+        shake: 0.1,
+        effects: {
+            bloom: 0.8,
+            bloomThreshold: 0.3,
+            vignette: 0.45,
+            chromatic: 0.2,
+            coreGlow: 1.1,
+            speedLines: 0.05,
+            timeScale: 0.8,
+            meteorRate: 0.5,
+            grain: 0.015
+        },
         waypoints: [
-            { pos: [-50, 130, -100], target: [0, 0, 0], fov: 55, roll: 0 },
-            { pos: [-30, 200, -60], target: [0, 0, 0], fov: 52, roll: 8 },
-            { pos: [0, 320, 0], target: [0, 0, 0], fov: 48, roll: -5 },
-            { pos: [20, 400, 40], target: [0, 0, 0], fov: 45, roll: 0 }
+            { pos: [-45, 140, -110], target: [0, 0, 0], fov: 55, roll: 0 },
+            { pos: [-30, 220, -65], target: [0, 0, 0], fov: 50, roll: 6 },
+            { pos: [0, 350, 0], target: [0, 0, 0], fov: 46, roll: -4 },
+            { pos: [15, 420, 35], target: [0, 0, 0], fov: 42, roll: 0 }
         ],
         audioMood: 'building'
     },
     {
-        name: 'final_descent',
-        displayName: 'The Return',
-        duration: 4,
+        name: 'homecoming',
+        displayName: 'Homecoming',
+        subtitle: 'Returning to where we began... among the stars',
+        duration: 5,
         speed: 'decelerating',
-        cameraRoll: 10,
-        shake: 0.3,
+        cameraRoll: 8,
+        shake: 0.06,
+        effects: {
+            bloom: 0.65,
+            bloomThreshold: 0.35,
+            vignette: 0.4,
+            chromatic: 0.15,
+            coreGlow: 1.0,
+            speedLines: 0.0,
+            timeScale: 0.8,
+            meteorRate: 0.5,
+            grain: 0.015
+        },
         waypoints: [
-            { pos: [20, 400, 40], target: [0, 0, 0], fov: 45, roll: 0 },
-            { pos: [40, 380, 80], target: [10, 0, 20], fov: 47, roll: 5 },
-            { pos: [0, 400, 50], target: [0, 0, 0], fov: 45, roll: 0 }
+            { pos: [15, 420, 35], target: [0, 0, 0], fov: 42, roll: 0 },
+            { pos: [30, 410, 65], target: [8, 0, 15], fov: 44, roll: 3 },
+            { pos: [0, 450, 30], target: [0, 0, 0], fov: 40, roll: 0 }
         ],
         audioMood: 'ambient'
     }

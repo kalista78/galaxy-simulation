@@ -4,9 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Milky Way Galaxy Simulation</title>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=4">
+    <link rel="stylesheet" href="nav.css?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="loading-galaxy">
+                <div class="loading-ring"></div>
+                <div class="loading-ring delay-1"></div>
+                <div class="loading-ring delay-2"></div>
+                <div class="loading-core"></div>
+            </div>
+            <div class="loading-title">MILKY WAY</div>
+            <div class="loading-subtitle">Initializing 310,000 stars...</div>
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="info">Milky Way Galaxy · ~300,000 stars · Scroll to zoom · Drag to rotate</div>
 
     <!-- Control Panel -->
@@ -90,6 +110,26 @@
                 </a>
             </div>
 
+            <div class="control-section-label">Explore More</div>
+
+            <div class="control-row">
+                <a href="nebula.html" class="btn" style="background: linear-gradient(135deg, rgba(200,50,100,0.2), rgba(100,50,200,0.2)); border-color: rgba(200,100,200,0.5); text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    🌈 Nebula Explorer
+                </a>
+            </div>
+
+            <div class="control-row">
+                <a href="evolution.html" class="btn" style="background: linear-gradient(135deg, rgba(255,150,50,0.3), rgba(255,50,50,0.2)); border-color: rgba(255,150,100,0.5); text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    🔥 Cosmic Evolution
+                </a>
+            </div>
+
+            <div class="control-row">
+                <a href="gravity.html" class="btn" style="background: linear-gradient(135deg, rgba(50,200,255,0.2), rgba(50,100,255,0.2)); border-color: rgba(100,200,255,0.5); text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    ⚛️ Gravity Lab
+                </a>
+            </div>
+
             <div class="sound-controls">
                 <div class="control-row">
                     <button class="btn" id="btn-sound" style="background: linear-gradient(135deg, rgba(100,200,255,0.2), rgba(150,100,255,0.1)); border-color: rgba(100,200,255,0.4);">
@@ -107,6 +147,7 @@
                 <div>Disk Stars: <span class="val">220,000</span></div>
                 <div>Bulge Stars: <span class="val">50,000</span></div>
                 <div>Halo/GC Stars: <span class="val">15,000</span></div>
+                <div>Deep Field: <span class="val">200 galaxies</span></div>
                 <div>FPS: <span class="val" id="fps-val">--</span></div>
                 <div>Rotation: <span class="val" id="rotation-val">0°</span></div>
             </div>
@@ -119,10 +160,28 @@
             <button class="btn" id="btn-merger-compact" title="Andromeda Collision">💫</button>
             <button class="btn" id="btn-supernova-compact" title="Supernova">💥</button>
             <a href="universe_scale.html" class="btn" id="btn-universe-compact" title="Universe Scale" style="text-decoration: none;">🔬</a>
+            <a href="nebula.html" class="btn" title="Nebula Explorer" style="text-decoration: none;">🌈</a>
+            <a href="evolution.html" class="btn" title="Cosmic Evolution" style="text-decoration: none;">🔥</a>
+            <a href="gravity.html" class="btn" title="Gravity Lab" style="text-decoration: none;">⚛️</a>
             <button class="btn" id="btn-sound-compact" title="Toggle Sound">🔊</button>
         </div>
     </div>
     <button id="toggle-panel">Show Controls</button>
+
+    <!-- Cinematic Letterbox Bars -->
+    <div id="letterbox-top" class="letterbox-bar"></div>
+    <div id="letterbox-bottom" class="letterbox-bar"></div>
+
+    <!-- Cinematic Fade Overlay -->
+    <div id="cinematic-fade"></div>
+
+    <!-- Tour Progress Bar -->
+    <div id="tour-progress">
+        <div id="tour-progress-fill"></div>
+    </div>
+
+    <!-- Tour Subtitle -->
+    <div id="tour-subtitle"></div>
 
     <!-- Journey Overlay -->
     <div id="journey-overlay">
@@ -170,10 +229,35 @@
     </script>
 
     <script type="module">
-        import { MilkyWaySimulation } from './js/MilkyWaySimulation.js?v=5';
+        import { MilkyWaySimulation } from './js/MilkyWaySimulation.js?v=14';
+
+        // Hide loading screen once simulation is ready
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingFill = document.querySelector('.loading-bar-fill');
+
+        // Animate loading bar
+        let progress = 0;
+        const loadingInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            loadingFill.style.width = progress + '%';
+        }, 200);
 
         // Initialize simulation
-        new MilkyWaySimulation();
+        const sim = new MilkyWaySimulation();
+
+        // Complete loading
+        clearInterval(loadingInterval);
+        loadingFill.style.width = '100%';
+        setTimeout(() => {
+            loadingScreen.classList.add('fade-out');
+            setTimeout(() => loadingScreen.remove(), 800);
+        }, 500);
+    </script>
+
+    <script type="module">
+        import { initNavigation } from './js/nav.js?v=1';
+        initNavigation({ activePage: 'milkyway' });
     </script>
 </body>
 </html>

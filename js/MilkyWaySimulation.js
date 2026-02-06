@@ -4,15 +4,18 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-import { GALAXY_CONFIG, SPECTRAL_COLORS, PLANET_DATA, SOLAR_JOURNEY_PHASES, BLACK_HOLE_JOURNEY_PHASES, TOUR_SEQUENCES, DETAILED_PLANET_DATA, ANDROMEDA_CONFIG, MERGER_PHASES, SUPERNOVA_PHASES, SUPERNOVA_CONFIG } from './config.js?v=3';
+import { GALAXY_CONFIG, SPECTRAL_COLORS, PLANET_DATA, SOLAR_JOURNEY_PHASES, BLACK_HOLE_JOURNEY_PHASES, TOUR_SEQUENCES, DETAILED_PLANET_DATA, ANDROMEDA_CONFIG, MERGER_PHASES, SUPERNOVA_PHASES, SUPERNOVA_CONFIG } from './config.js?v=4';
 import { gaussianRandom, getSpectralType, bulgeDensity, diskDensity, easeInOutCubic } from './utils.js?v=3';
-import { starVertexShader, starFragmentShader } from './shaders/star-shaders.js?v=3';
-import { dustVertexShader, dustFragmentShader } from './shaders/dust-shaders.js?v=3';
-import { coreVertexShader, coreFragmentShader, coronaFragmentShader, markerVertexShader, markerFragmentShader } from './shaders/core-shaders.js?v=3';
+import { starVertexShader, starFragmentShader } from './shaders/star-shaders.js?v=10';
+import { dustVertexShader, dustFragmentShader } from './shaders/dust-shaders.js?v=7';
+import { coreVertexShader, coreFragmentShader, coronaFragmentShader, markerVertexShader, markerFragmentShader } from './shaders/core-shaders.js?v=11';
 import { blackHoleVertexShader, blackHoleFragmentShader, accretionVertexShader, accretionFragmentShader } from './shaders/blackhole-shaders.js?v=3';
 import { sunVertexShader, sunFragmentShader, planetVertexShader, planetFragmentShader, ringsVertexShader, ringsFragmentShader } from './shaders/solarsystem-shaders.js?v=3';
 import { detailedPlanetVertexShader, detailedPlanetFragmentShader, atmosphereVertexShader, atmosphereFragmentShader, cloudVertexShader, cloudFragmentShader, detailedRingsVertexShader, detailedRingsFragmentShader } from './shaders/planet-detail-shaders.js?v=3';
 import { supernovaStarVertexShader, supernovaStarFragmentShader, shockwaveVertexShader, shockwaveFragmentShader, debrisVertexShader, debrisFragmentShader, nebulaVertexShader, nebulaFragmentShader, pulsarVertexShader, pulsarFragmentShader, flashVertexShader, flashFragmentShader, coronaVertexShader as supernovaCoronaVertexShader, coronaFragmentShader as supernovaCoronaFragmentShader } from './shaders/supernova-shaders.js?v=3';
+import { meteorVertexShader, meteorFragmentShader, deepFieldVertexShader, deepFieldFragmentShader } from './shaders/meteor-shaders.js?v=1';
+import { hiiVertexShader, hiiFragmentShader, clusterVertexShader, clusterFragmentShader, vignetteVertexShader, vignetteFragmentShader } from './shaders/hii-region-shaders.js?v=6';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { AudioManager } from './AudioManager.js?v=3';
 import { SolarSystemDetailed } from './SolarSystemDetailed.js?v=1';
 
@@ -42,6 +45,7 @@ export class MilkyWaySimulation {
 
         // Tour sequences
         this.tourSequences = TOUR_SEQUENCES;
+        this.tourMeteorRate = undefined; // Set during cinematic tour for meteor rate scaling
 
         // Audio manager
         this.audioManager = new AudioManager();
@@ -121,6 +125,19 @@ export class MilkyWaySimulation {
             pulsarActive: false
         };
 
+        // Shooting stars / Meteor shower state
+        this.meteorState = {
+            meteors: [],
+            maxMeteors: 8,
+            spawnTimer: 0,
+            spawnInterval: 1.5,
+            trailPositions: [],
+            enabled: true
+        };
+
+        // Deep field background galaxies
+        this.deepFieldGalaxies = null;
+
         this.init();
         this.createGalaxy();
         this.setupPostProcessing();
@@ -173,16 +190,20 @@ export class MilkyWaySimulation {
         this.createBulgeStars();
         this.createHaloAndGlobularClusters();
         this.createDustLanes();
+        this.createHIIRegions();
+        this.createOpenClusters();
         this.createSolarSystem();
         this.createAndromedaGalaxy();
         this.createSupernova();
+        this.createShootingStarSystem();
+        this.createDeepFieldGalaxies();
         this.initCinematicSystem();
     }
 
     createBackgroundStars() {
         // Distant background stars/galaxies for depth
         const geometry = new THREE.BufferGeometry();
-        const count = 5000;
+        const count = 12000;
 
         const positions = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
@@ -192,7 +213,7 @@ export class MilkyWaySimulation {
             // Distribute on a large sphere
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            const r = 800 + Math.random() * 500;
+            const r = 800 + Math.random() * 600;
 
             positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
             positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
@@ -233,7 +254,7 @@ export class MilkyWaySimulation {
     }
 
     createGalacticCore() {
-        // Volumetric core glow using a sphere with custom shader
+        // Volumetric core glow - outer layer
         const geometry = new THREE.SphereGeometry(40, 64, 64);
         const material = new THREE.ShaderMaterial({
             uniforms: {
@@ -461,16 +482,16 @@ export class MilkyWaySimulation {
             colors[i * 3 + 1] = starColor.g * colorVar;
             colors[i * 3 + 2] = starColor.b * colorVar;
 
-            // Size based on spectral type (hotter = larger visual)
-            const spectralSizes = { O: 4.0, B: 3.5, A: 2.5, F: 2.0, G: 1.8, K: 1.5, M: 1.2 };
+            // Size based on spectral type
+            const spectralSizes = { O: 3.8, B: 3.2, A: 2.4, F: 1.9, G: 1.7, K: 1.4, M: 1.1 };
             sizes[i] = spectralSizes[spectralType] * (0.7 + Math.random() * 0.6);
 
             // Brightness based on spectral type
-            const spectralBright = { O: 2.0, B: 1.5, A: 1.2, F: 1.0, G: 0.9, K: 0.7, M: 0.5 };
+            const spectralBright = { O: 1.8, B: 1.4, A: 1.1, F: 0.95, G: 0.85, K: 0.65, M: 0.45 };
             brightness[i] = spectralBright[spectralType] * (0.6 + Math.random() * 0.4);
 
             // Boost brightness for arm stars
-            if (inArm) brightness[i] *= 1.3;
+            if (inArm) brightness[i] *= 1.25;
 
             // Rotation parameters
             const dist = Math.sqrt(x * x + z * z);
@@ -555,11 +576,11 @@ export class MilkyWaySimulation {
             colors[i * 3 + 1] = starColor.g * 0.95;
             colors[i * 3 + 2] = starColor.b * 0.85;
 
-            sizes[i] = 1.5 + Math.random() * 1.5;
+            sizes[i] = 1.3 + Math.random() * 1.4;
 
-            // Brightness increases toward center
+            // Brightness increases toward center - strong for warm glow
             const centralBrightness = 1 - r / (GALAXY_CONFIG.bulgeRadius * 2);
-            brightness[i] = (0.6 + centralBrightness * 0.8) * (0.7 + Math.random() * 0.3);
+            brightness[i] = (0.6 + centralBrightness * 0.7) * (0.7 + Math.random() * 0.3);
 
             // Faster rotation in bulge
             const dist = Math.sqrt(x * x + z * z);
@@ -767,6 +788,230 @@ export class MilkyWaySimulation {
         const dust = new THREE.Points(geometry, material);
         dust.renderOrder = 1; // Render after stars
         this.scene.add(dust);
+    }
+
+    // ============================================================
+    // HII EMISSION NEBULAE (Star-forming regions along spiral arms)
+    // ============================================================
+
+    createHIIRegions() {
+        const count = 2000;
+        const geometry = new THREE.BufferGeometry();
+
+        const positions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        const opacities = new Float32Array(count);
+        const colors = new Float32Array(count * 3);
+        const rotationSpeeds = new Float32Array(count);
+        const initialAngles = new Float32Array(count);
+        const distances = new Float32Array(count);
+        const turbulences = new Float32Array(count);
+
+        const armAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
+
+        // Subtle HII region colors - desaturated warm tones, not bright pink
+        const hiiColors = [
+            { r: 0.6, g: 0.25, b: 0.2 },   // Muted warm red
+            { r: 0.5, g: 0.2, b: 0.15 },    // Dusty rose
+            { r: 0.55, g: 0.3, b: 0.2 },    // Warm salmon
+            { r: 0.4, g: 0.2, b: 0.15 },    // Faded brick
+            { r: 0.25, g: 0.3, b: 0.5 },    // Muted blue reflection
+            { r: 0.3, g: 0.35, b: 0.5 },    // Subtle blue
+            { r: 0.5, g: 0.35, b: 0.2 },    // Warm amber
+        ];
+
+        for (let i = 0; i < count; i++) {
+            // Place along spiral arms (star-forming regions are IN the arms)
+            const armIndex = Math.floor(Math.random() * 4);
+            const baseAngle = armAngles[armIndex];
+
+            // Radial position - concentrated in the middle of the disk
+            const r = 25 + Math.pow(Math.random(), 0.6) * (GALAXY_CONFIG.diskRadius * 0.65 - 25);
+            const spiralAngle = Math.log(r / 8) / GALAXY_CONFIG.spiralTightness;
+
+            // Place along the outer/leading edge of spiral arms
+            let theta = baseAngle + spiralAngle;
+            theta += gaussianRandom(0, GALAXY_CONFIG.armWidth * 0.5 / r);
+
+            const x = r * Math.cos(theta);
+            const z = r * Math.sin(theta);
+            const y = gaussianRandom(0, 0.8);
+
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+
+            // Smaller, softer particles
+            sizes[i] = 10 + Math.random() * 25;
+
+            // Subtle opacity - adding warmth and color to arms
+            const centerFade = Math.min(1.0, (r - 25) / 40);
+            opacities[i] = (0.008 + Math.random() * 0.02) * centerFade;
+
+            // Color selection - mostly warm/muted tones
+            const colorChoice = Math.random();
+            let c;
+            if (colorChoice < 0.35) {
+                c = hiiColors[0]; // Muted warm red
+            } else if (colorChoice < 0.55) {
+                c = hiiColors[1]; // Dusty rose
+            } else if (colorChoice < 0.70) {
+                c = hiiColors[2]; // Warm salmon
+            } else if (colorChoice < 0.80) {
+                c = hiiColors[3]; // Faded brick
+            } else if (colorChoice < 0.88) {
+                c = hiiColors[4]; // Muted blue
+            } else if (colorChoice < 0.94) {
+                c = hiiColors[5]; // Subtle blue
+            } else {
+                c = hiiColors[6]; // Warm amber
+            }
+
+            // Color variation
+            const cVar = 0.8 + Math.random() * 0.25;
+            colors[i * 3] = c.r * cVar;
+            colors[i * 3 + 1] = c.g * cVar;
+            colors[i * 3 + 2] = c.b * cVar;
+
+            // Rotation parameters
+            const dist = Math.sqrt(x * x + z * z);
+            distances[i] = dist;
+            initialAngles[i] = Math.atan2(z, x);
+            rotationSpeeds[i] = GALAXY_CONFIG.baseRotationSpeed * (0.8 + Math.random() * 0.4);
+            turbulences[i] = Math.random();
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1));
+        geometry.setAttribute('nebulaColor', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(rotationSpeeds, 1));
+        geometry.setAttribute('initialAngle', new THREE.BufferAttribute(initialAngles, 1));
+        geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(distances, 1));
+        geometry.setAttribute('turbulence', new THREE.BufferAttribute(turbulences, 1));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: this.uniforms.time,
+                speedMultiplier: this.uniforms.speedMultiplier,
+                globalBrightness: this.uniforms.globalBrightness
+            },
+            vertexShader: hiiVertexShader,
+            fragmentShader: hiiFragmentShader,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const hiiRegions = new THREE.Points(geometry, material);
+        hiiRegions.renderOrder = 2; // Render after dust
+        this.scene.add(hiiRegions);
+    }
+
+    // ============================================================
+    // OPEN STAR CLUSTERS (OB Associations - bright blue-white knots)
+    // ============================================================
+
+    createOpenClusters() {
+        // Open clusters along spiral arms
+        const numClusters = 80;
+        const starsPerCluster = 50;
+        const totalStars = numClusters * starsPerCluster;
+
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(totalStars * 3);
+        const colors = new Float32Array(totalStars * 3);
+        const sizes = new Float32Array(totalStars);
+        const brightness = new Float32Array(totalStars);
+        const rotationSpeeds = new Float32Array(totalStars);
+        const initialAngles = new Float32Array(totalStars);
+        const distances = new Float32Array(totalStars);
+
+        const armAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
+
+        let idx = 0;
+        for (let c = 0; c < numClusters; c++) {
+            // Cluster center along a spiral arm
+            const armIndex = Math.floor(Math.random() * 4);
+            const baseAngle = armAngles[armIndex];
+            const r = 20 + Math.random() * (GALAXY_CONFIG.diskRadius * 0.65);
+            const spiralAngle = Math.log(r / 8) / GALAXY_CONFIG.spiralTightness;
+            let theta = baseAngle + spiralAngle + gaussianRandom(0, GALAXY_CONFIG.armWidth * 0.3 / r);
+
+            const cx = r * Math.cos(theta);
+            const cz = r * Math.sin(theta);
+            const cy = gaussianRandom(0, 0.5);
+
+            const clusterRadius = 1.5 + Math.random() * 3;
+
+            for (let s = 0; s < starsPerCluster; s++) {
+                // King profile distribution within cluster
+                const sr = Math.pow(Math.random(), 0.5) * clusterRadius;
+                const stheta = Math.random() * Math.PI * 2;
+                const sphi = Math.acos(2 * Math.random() - 1);
+
+                const x = cx + sr * Math.sin(sphi) * Math.cos(stheta);
+                const y = cy + sr * Math.cos(sphi) * 0.4; // Flattened
+                const z = cz + sr * Math.sin(sphi) * Math.sin(stheta);
+
+                positions[idx * 3] = x;
+                positions[idx * 3 + 1] = y;
+                positions[idx * 3 + 2] = z;
+
+                // Young, hot OB stars - blue-white dominated
+                const rand = Math.random();
+                let starColor;
+                if (rand < 0.15) {
+                    starColor = SPECTRAL_COLORS.O; // Blue giants
+                } else if (rand < 0.45) {
+                    starColor = SPECTRAL_COLORS.B; // Blue-white
+                } else if (rand < 0.70) {
+                    starColor = SPECTRAL_COLORS.A; // White
+                } else {
+                    starColor = SPECTRAL_COLORS.F; // Yellow-white
+                }
+
+                const cVar = 0.9 + Math.random() * 0.2;
+                colors[idx * 3] = starColor.r * cVar;
+                colors[idx * 3 + 1] = starColor.g * cVar;
+                colors[idx * 3 + 2] = starColor.b * cVar;
+
+                // Cluster stars - bright but not overwhelming
+                sizes[idx] = 2.0 + Math.random() * 2.5;
+                brightness[idx] = 0.9 + Math.random() * 0.6;
+
+                const dist = Math.sqrt(x * x + z * z);
+                distances[idx] = dist;
+                initialAngles[idx] = Math.atan2(z, x);
+                rotationSpeeds[idx] = GALAXY_CONFIG.baseRotationSpeed * (0.85 + Math.random() * 0.3);
+
+                idx++;
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        geometry.setAttribute('brightness', new THREE.BufferAttribute(brightness, 1));
+        geometry.setAttribute('rotationSpeed', new THREE.BufferAttribute(rotationSpeeds, 1));
+        geometry.setAttribute('initialAngle', new THREE.BufferAttribute(initialAngles, 1));
+        geometry.setAttribute('distanceFromCenter', new THREE.BufferAttribute(distances, 1));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: this.uniforms.time,
+                globalBrightness: this.uniforms.globalBrightness,
+                speedMultiplier: this.uniforms.speedMultiplier
+            },
+            vertexShader: clusterVertexShader,
+            fragmentShader: clusterFragmentShader,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const clusters = new THREE.Points(geometry, material);
+        this.scene.add(clusters);
     }
 
     // ============================================================
@@ -2390,7 +2635,32 @@ export class MilkyWaySimulation {
             shakeIntensity: 0,
             shakeOffset: new THREE.Vector3(),
             velocity: 0,
-            lastPos: new THREE.Vector3()
+            lastPos: new THREE.Vector3(),
+            // Saved post-processing state for restoration
+            savedBloomStrength: 0.6,
+            savedBloomThreshold: 0.35,
+            savedVignette: 0.25,
+            savedChromatic: 0.3,
+            savedGrain: 0.015,
+            savedCoreGlow: 1.0,
+            // Current interpolated effect values
+            currentBloom: 0.6,
+            currentBloomThreshold: 0.35,
+            currentVignette: 0.25,
+            currentChromatic: 0.3,
+            currentGrain: 0.015,
+            currentCoreGlow: 1.0,
+            // Phase tracking
+            fadePhase: 'none', // 'fadein', 'active', 'fadeout', 'none'
+            fadeTimer: 0,
+            // Shake seeds for coherent noise
+            shakeSeed: [
+                Math.random() * 100,
+                Math.random() * 100,
+                Math.random() * 100,
+                Math.random() * 100,
+                Math.random() * 100
+            ]
         };
 
         // Calculate total tour duration
@@ -2413,6 +2683,24 @@ export class MilkyWaySimulation {
         this.tourState.totalTime = 0;
         this.tourState.currentSequenceIndex = 0;
         this.tourState.sequenceProgress = 0;
+        this.tourState.fadePhase = 'fadein';
+        this.tourState.fadeTimer = 0;
+
+        // Save post-processing state
+        this.tourState.savedBloomStrength = this.bloomPass.strength;
+        this.tourState.savedBloomThreshold = this.bloomPass.threshold;
+        this.tourState.savedVignette = this.vignettePass.uniforms.vignetteStrength.value;
+        this.tourState.savedChromatic = this.vignettePass.uniforms.chromaticStrength.value;
+        this.tourState.savedGrain = this.vignettePass.uniforms.grainStrength.value;
+        this.tourState.savedCoreGlow = this.uniforms.coreGlow.value;
+
+        // Initialize current effect values
+        this.tourState.currentBloom = this.bloomPass.strength;
+        this.tourState.currentBloomThreshold = this.bloomPass.threshold;
+        this.tourState.currentVignette = this.vignettePass.uniforms.vignetteStrength.value;
+        this.tourState.currentChromatic = this.vignettePass.uniforms.chromaticStrength.value;
+        this.tourState.currentGrain = this.vignettePass.uniforms.grainStrength.value;
+        this.tourState.currentCoreGlow = this.uniforms.coreGlow.value;
 
         // Disable controls
         this.controls.enabled = false;
@@ -2420,6 +2708,23 @@ export class MilkyWaySimulation {
         // Hide controls, show return button
         document.getElementById('controls').classList.add('hidden');
         document.getElementById('btn-return').style.display = 'block';
+
+        // Start cinematic fade from black
+        const fadeOverlay = document.getElementById('cinematic-fade');
+        fadeOverlay.classList.add('active');
+
+        // Activate letterbox bars
+        document.getElementById('letterbox-top').classList.add('active');
+        document.getElementById('letterbox-bottom').classList.add('active');
+
+        // Show progress bar
+        document.getElementById('tour-progress').classList.add('active');
+
+        // After fade-in delay, start the actual tour
+        setTimeout(() => {
+            fadeOverlay.classList.remove('active');
+            this.tourState.fadePhase = 'active';
+        }, 800);
 
         // Show tour info
         const overlay = document.getElementById('journey-overlay');
@@ -2440,6 +2745,21 @@ export class MilkyWaySimulation {
         document.getElementById('journey-sub').classList.add('visible');
         document.getElementById('journey-dist').classList.remove('visible');
 
+        // Show subtitle text
+        const subtitleEl = document.getElementById('tour-subtitle');
+        if (subtitleEl && sequence.subtitle) {
+            subtitleEl.classList.remove('visible');
+            // Brief delay for transition reset
+            setTimeout(() => {
+                subtitleEl.textContent = sequence.subtitle;
+                subtitleEl.classList.add('visible');
+            }, 100);
+            // Fade out subtitle after 4 seconds
+            setTimeout(() => {
+                subtitleEl.classList.remove('visible');
+            }, 4500);
+        }
+
         // Update audio mood
         if (this.audioManager && this.audioManager.isEnabled) {
             this.audioManager.setTourSequence(sequence.name);
@@ -2448,6 +2768,12 @@ export class MilkyWaySimulation {
 
     updateCinematicTour(deltaTime) {
         if (!this.tourState.active) return;
+
+        // Handle fade-in phase
+        if (this.tourState.fadePhase === 'fadein') {
+            this.tourState.fadeTimer += deltaTime;
+            if (this.tourState.fadeTimer < 0.8) return; // Wait for fade
+        }
 
         // Progress through the tour
         this.tourState.time += deltaTime;
@@ -2490,6 +2816,13 @@ export class MilkyWaySimulation {
         // Calculate progress within current sequence
         const seqProgress = (this.tourState.totalTime - seqStartTime) / currentSeq.duration;
 
+        // Update progress bar
+        const progressFill = document.getElementById('tour-progress-fill');
+        if (progressFill) {
+            const totalProgress = (this.tourState.totalTime / this.tourTotalDuration) * 100;
+            progressFill.style.width = totalProgress + '%';
+        }
+
         // Apply speed-based easing for different sequence types
         let easedProgress;
         switch (currentSeq.speed) {
@@ -2513,6 +2846,9 @@ export class MilkyWaySimulation {
                 break;
             case 'cruising':
                 easedProgress = seqProgress; // Linear for smooth cruising
+                break;
+            case 'medium':
+                easedProgress = this.easeInOutCubic(seqProgress);
                 break;
             default:
                 easedProgress = this.easeInOutCubic(seqProgress);
@@ -2544,19 +2880,38 @@ export class MilkyWaySimulation {
             case 'slow_dramatic':
                 lerpFactor = 0.04;
                 break;
+            case 'medium':
+                lerpFactor = 0.07;
+                break;
             default:
                 lerpFactor = 0.08;
         }
 
-        // Calculate camera shake
-        this.tourState.shakeIntensity = currentSeq.shake || 0;
-        if (this.tourState.shakeIntensity > 0) {
-            const shakeAmount = this.tourState.shakeIntensity * (0.5 + this.tourState.velocity * 0.3);
-            this.tourState.shakeOffset.set(
-                (Math.random() - 0.5) * shakeAmount,
-                (Math.random() - 0.5) * shakeAmount * 0.5,
-                (Math.random() - 0.5) * shakeAmount
-            );
+        // ============================================================
+        // SMOOTH COHERENT CAMERA SHAKE (Perlin-like using sin waves)
+        // ============================================================
+        const shakeBase = currentSeq.shake || 0;
+        if (shakeBase > 0) {
+            const t = this.tourState.totalTime;
+            const seeds = this.tourState.shakeSeed;
+            const shakeAmount = shakeBase * (0.5 + this.tourState.velocity * 0.3);
+
+            // Multi-frequency sin waves for organic motion
+            const shakeX = (
+                Math.sin(t * 7.3 + seeds[0]) * 0.5 +
+                Math.sin(t * 13.7 + seeds[1]) * 0.3 +
+                Math.sin(t * 23.1 + seeds[2]) * 0.2
+            ) * shakeAmount;
+            const shakeY = (
+                Math.sin(t * 5.7 + seeds[3]) * 0.5 +
+                Math.sin(t * 11.3 + seeds[4]) * 0.3
+            ) * shakeAmount * 0.6;
+            const shakeZ = (
+                Math.sin(t * 9.1 + seeds[2]) * 0.4 +
+                Math.sin(t * 17.3 + seeds[0]) * 0.3
+            ) * shakeAmount * 0.8;
+
+            this.tourState.shakeOffset.set(shakeX, shakeY, shakeZ);
         } else {
             this.tourState.shakeOffset.multiplyScalar(0.9);
         }
@@ -2584,6 +2939,53 @@ export class MilkyWaySimulation {
         if (Math.abs(this.tourState.currentRoll) > 0.1) {
             const rollRad = (this.tourState.currentRoll * Math.PI) / 180;
             this.camera.rotateZ(rollRad);
+        }
+
+        // ============================================================
+        // DYNAMIC POST-PROCESSING (smooth lerp to target effects)
+        // ============================================================
+        if (currentSeq.effects) {
+            const fx = currentSeq.effects;
+            const lerpRate = 0.03;
+
+            // Bloom
+            this.tourState.currentBloom += (fx.bloom - this.tourState.currentBloom) * lerpRate;
+            this.tourState.currentBloomThreshold += (fx.bloomThreshold - this.tourState.currentBloomThreshold) * lerpRate;
+            this.bloomPass.strength = this.tourState.currentBloom;
+            this.bloomPass.threshold = this.tourState.currentBloomThreshold;
+
+            // Vignette
+            this.tourState.currentVignette += (fx.vignette - this.tourState.currentVignette) * lerpRate;
+            this.vignettePass.uniforms.vignetteStrength.value = this.tourState.currentVignette;
+
+            // Chromatic aberration
+            this.tourState.currentChromatic += (fx.chromatic - this.tourState.currentChromatic) * lerpRate;
+            this.vignettePass.uniforms.chromaticStrength.value = this.tourState.currentChromatic;
+
+            // Film grain
+            this.tourState.currentGrain += (fx.grain - this.tourState.currentGrain) * lerpRate;
+            this.vignettePass.uniforms.grainStrength.value = this.tourState.currentGrain;
+
+            // Core glow with pulse during core sequences
+            let targetCoreGlow = fx.coreGlow;
+            if (currentSeq.name === 'heart_of_darkness' || currentSeq.name === 'event_horizon') {
+                const distToCenter = this.camera.position.length();
+                const proximityFactor = Math.max(0, 1.0 - distToCenter / 200);
+                const corePulse = 1.0 + Math.sin(this.tourState.totalTime * 2.0) * 0.15 * proximityFactor;
+                targetCoreGlow *= corePulse;
+            }
+            this.tourState.currentCoreGlow += (targetCoreGlow - this.tourState.currentCoreGlow) * lerpRate;
+            this.uniforms.coreGlow.value = this.tourState.currentCoreGlow;
+
+            // Galaxy rotation speed (timeScale effect)
+            this.uniforms.speedMultiplier.value += (fx.timeScale - this.uniforms.speedMultiplier.value) * lerpRate;
+        }
+
+        // ============================================================
+        // METEOR RATE SCALING
+        // ============================================================
+        if (currentSeq.effects && currentSeq.effects.meteorRate !== undefined) {
+            this.tourMeteorRate = currentSeq.effects.meteorRate;
         }
 
         // Update audio based on current sequence mood
@@ -2719,6 +3121,27 @@ export class MilkyWaySimulation {
         if (!this.tourState.active) return;
 
         this.tourState.active = false;
+        this.tourState.fadePhase = 'fadeout';
+
+        // Start fade to black
+        const fadeOverlay = document.getElementById('cinematic-fade');
+        fadeOverlay.classList.add('active');
+
+        // Hide subtitle
+        const subtitleEl = document.getElementById('tour-subtitle');
+        if (subtitleEl) subtitleEl.classList.remove('visible');
+
+        // Hide progress bar
+        document.getElementById('tour-progress').classList.remove('active');
+        const progressFill = document.getElementById('tour-progress-fill');
+        if (progressFill) progressFill.style.width = '0%';
+
+        // Remove letterbox bars
+        document.getElementById('letterbox-top').classList.remove('active');
+        document.getElementById('letterbox-bottom').classList.remove('active');
+
+        // Reset meteor rate
+        this.tourMeteorRate = undefined;
 
         // Animate back to saved position
         const startPos = this.camera.position.clone();
@@ -2728,31 +3151,61 @@ export class MilkyWaySimulation {
         const startFov = this.camera.fov;
         const endFov = this.tourState.savedFov;
 
+        // Saved post-processing values
+        const startBloom = this.bloomPass.strength;
+        const endBloom = this.tourState.savedBloomStrength;
+        const startBloomThreshold = this.bloomPass.threshold;
+        const endBloomThreshold = this.tourState.savedBloomThreshold;
+        const startVignette = this.vignettePass.uniforms.vignetteStrength.value;
+        const endVignette = this.tourState.savedVignette;
+        const startChromatic = this.vignettePass.uniforms.chromaticStrength.value;
+        const endChromatic = this.tourState.savedChromatic;
+        const startGrain = this.vignettePass.uniforms.grainStrength.value;
+        const endGrain = this.tourState.savedGrain;
+        const startCoreGlow = this.uniforms.coreGlow.value;
+        const endCoreGlow = this.tourState.savedCoreGlow;
+        const startSpeed = this.uniforms.speedMultiplier.value;
+
         const duration = 2000;
         const startTime = performance.now();
 
-        const animateBack = () => {
-            const elapsed = performance.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-            const t = ease(progress);
+        // Wait a bit for fade then animate back
+        setTimeout(() => {
+            fadeOverlay.classList.remove('active');
 
-            this.camera.position.lerpVectors(startPos, targetPos, t);
-            this.controls.target.lerpVectors(startTarget, endTarget, t);
-            this.camera.fov = startFov + (endFov - startFov) * t;
-            this.camera.updateProjectionMatrix();
+            const animateBack = () => {
+                const elapsed = performance.now() - startTime - 400;
+                const progress = Math.min(Math.max(elapsed / duration, 0), 1);
+                const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                const t = ease(progress);
 
-            if (progress < 1) {
-                requestAnimationFrame(animateBack);
-            } else {
-                this.controls.enabled = true;
-                document.getElementById('btn-return').style.display = 'none';
-                document.getElementById('controls').classList.remove('hidden');
-                document.getElementById('journey-overlay').classList.remove('active');
-            }
-        };
+                this.camera.position.lerpVectors(startPos, targetPos, t);
+                this.controls.target.lerpVectors(startTarget, endTarget, t);
+                this.camera.fov = startFov + (endFov - startFov) * t;
+                this.camera.updateProjectionMatrix();
 
-        animateBack();
+                // Restore post-processing
+                this.bloomPass.strength = startBloom + (endBloom - startBloom) * t;
+                this.bloomPass.threshold = startBloomThreshold + (endBloomThreshold - startBloomThreshold) * t;
+                this.vignettePass.uniforms.vignetteStrength.value = startVignette + (endVignette - startVignette) * t;
+                this.vignettePass.uniforms.chromaticStrength.value = startChromatic + (endChromatic - startChromatic) * t;
+                this.vignettePass.uniforms.grainStrength.value = startGrain + (endGrain - startGrain) * t;
+                this.uniforms.coreGlow.value = startCoreGlow + (endCoreGlow - startCoreGlow) * t;
+                this.uniforms.speedMultiplier.value = startSpeed + (1.0 - startSpeed) * t;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateBack);
+                } else {
+                    this.controls.enabled = true;
+                    this.tourState.fadePhase = 'none';
+                    document.getElementById('btn-return').style.display = 'none';
+                    document.getElementById('controls').classList.remove('hidden');
+                    document.getElementById('journey-overlay').classList.remove('active');
+                }
+            };
+
+            requestAnimationFrame(animateBack);
+        }, 400);
     }
 
     // ============================================================
@@ -3291,21 +3744,39 @@ export class MilkyWaySimulation {
     }
 
     setupPostProcessing() {
-        // Effect composer for bloom
+        // Effect composer for bloom + cinematic effects
         this.composer = new EffectComposer(this.renderer);
 
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
-        // Bloom pass for realistic star glow
+        // Bloom pass - rich warm glow without blowing out core
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.8,   // Strength
-            0.4,   // Radius
-            0.2    // Threshold
+            0.6,    // Strength (rich glow)
+            0.4,    // Radius
+            0.35    // Threshold
         );
         this.composer.addPass(bloomPass);
         this.bloomPass = bloomPass;
+
+        // Cinematic vignette + film grain + chromatic aberration
+        const vignetteShader = {
+            uniforms: {
+                tDiffuse: { value: null },
+                vignetteStrength: { value: 0.25 },
+                grainStrength: { value: 0.015 },
+                time: this.uniforms.time,
+                chromaticStrength: { value: 0.3 },
+                resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+            },
+            vertexShader: vignetteVertexShader,
+            fragmentShader: vignetteFragmentShader
+        };
+
+        const vignettePass = new ShaderPass(vignetteShader);
+        this.composer.addPass(vignettePass);
+        this.vignettePass = vignettePass;
     }
 
     onResize() {
@@ -3317,6 +3788,278 @@ export class MilkyWaySimulation {
 
         this.renderer.setSize(width, height);
         this.composer.setSize(width, height);
+
+        // Update vignette resolution uniform
+        if (this.vignettePass) {
+            this.vignettePass.uniforms.resolution.value.set(width, height);
+        }
+    }
+
+    // ============================================================
+    // SHOOTING STAR / METEOR SHOWER SYSTEM
+    // ============================================================
+    createShootingStarSystem() {
+        // Pre-allocate meteor particle system
+        const maxTrailPoints = this.meteorState.maxMeteors * 30; // 30 trail points per meteor
+        const geometry = new THREE.BufferGeometry();
+
+        const positions = new Float32Array(maxTrailPoints * 3);
+        const sizes = new Float32Array(maxTrailPoints);
+        const colors = new Float32Array(maxTrailPoints * 3);
+        const lifetimes = new Float32Array(maxTrailPoints);
+        const maxLifetimes = new Float32Array(maxTrailPoints);
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        geometry.setAttribute('meteorColor', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('life', new THREE.BufferAttribute(lifetimes, 1));
+        geometry.setAttribute('maxLife', new THREE.BufferAttribute(maxLifetimes, 1));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: this.uniforms.time
+            },
+            vertexShader: meteorVertexShader,
+            fragmentShader: meteorFragmentShader,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        this.meteorPoints = new THREE.Points(geometry, material);
+        this.scene.add(this.meteorPoints);
+    }
+
+    spawnMeteor() {
+        const state = this.meteorState;
+        if (state.meteors.length >= state.maxMeteors) return;
+
+        // Spawn in a region visible from typical camera positions
+        const camPos = this.camera.position;
+        const camDir = new THREE.Vector3(0, 0, 0).sub(camPos).normalize();
+
+        // Random offset from camera view direction
+        const right = new THREE.Vector3().crossVectors(camDir, new THREE.Vector3(0, 1, 0)).normalize();
+        const up = new THREE.Vector3().crossVectors(right, camDir);
+
+        // Start position - somewhere in the visible area
+        const spreadX = (Math.random() - 0.5) * 300;
+        const spreadY = (Math.random() - 0.3) * 200;
+        const spreadZ = (Math.random() - 0.5) * 300;
+
+        const startPos = new THREE.Vector3(
+            camPos.x * 0.3 + spreadX,
+            Math.abs(camPos.y * 0.2) + 20 + spreadY,
+            camPos.z * 0.3 + spreadZ
+        );
+
+        // Velocity - mostly downward and sideways (like real meteors)
+        const speed = 80 + Math.random() * 120;
+        const angle = Math.random() * Math.PI * 2;
+        const downAngle = 0.3 + Math.random() * 0.5;
+        const velocity = new THREE.Vector3(
+            Math.cos(angle) * Math.sin(downAngle) * speed,
+            -Math.cos(downAngle) * speed,
+            Math.sin(angle) * Math.sin(downAngle) * speed
+        );
+
+        // Color - white/blue/yellow variations
+        const colorChoice = Math.random();
+        let color;
+        if (colorChoice < 0.4) {
+            color = new THREE.Color(0.9, 0.95, 1.0); // White-blue
+        } else if (colorChoice < 0.7) {
+            color = new THREE.Color(1.0, 0.9, 0.7); // Warm white
+        } else if (colorChoice < 0.85) {
+            color = new THREE.Color(0.7, 0.85, 1.0); // Blue
+        } else {
+            color = new THREE.Color(1.0, 0.7, 0.3); // Orange (bolide)
+        }
+
+        state.meteors.push({
+            position: startPos,
+            velocity: velocity,
+            color: color,
+            life: 0,
+            maxLife: 0.8 + Math.random() * 1.2,
+            size: 2 + Math.random() * 4,
+            trail: [] // Trail history positions
+        });
+    }
+
+    updateShootingStars(deltaTime) {
+        const state = this.meteorState;
+        if (!state.enabled) return;
+
+        // Apply tour meteor rate scaling
+        const meteorRateMultiplier = this.tourMeteorRate !== undefined ? this.tourMeteorRate : 1.0;
+
+        // Spawn timer
+        state.spawnTimer += deltaTime * meteorRateMultiplier;
+        if (state.spawnTimer >= state.spawnInterval) {
+            state.spawnTimer = 0;
+            // Randomize next spawn interval for natural feel
+            state.spawnInterval = 0.8 + Math.random() * 3.0;
+
+            // Sometimes spawn a burst (meteor shower effect)
+            // Higher meteor rate = more burst chance
+            const burstChance = 0.15 * Math.max(meteorRateMultiplier, 1);
+            const burstCount = Math.random() < burstChance ? 3 : 1;
+            for (let b = 0; b < burstCount; b++) {
+                this.spawnMeteor();
+            }
+        }
+
+        // Update existing meteors
+        const positions = this.meteorPoints.geometry.attributes.position.array;
+        const sizes = this.meteorPoints.geometry.attributes.size.array;
+        const colors = this.meteorPoints.geometry.attributes.meteorColor.array;
+        const lifetimes = this.meteorPoints.geometry.attributes.life.array;
+        const maxLifetimes = this.meteorPoints.geometry.attributes.maxLife.array;
+
+        let pointIndex = 0;
+
+        for (let i = state.meteors.length - 1; i >= 0; i--) {
+            const meteor = state.meteors[i];
+            meteor.life += deltaTime;
+
+            if (meteor.life >= meteor.maxLife) {
+                state.meteors.splice(i, 1);
+                continue;
+            }
+
+            // Update position
+            meteor.position.add(meteor.velocity.clone().multiplyScalar(deltaTime));
+
+            // Add current position to trail
+            meteor.trail.push(meteor.position.clone());
+            if (meteor.trail.length > 25) meteor.trail.shift();
+
+            // Write trail points to buffer
+            for (let t = 0; t < meteor.trail.length && pointIndex < positions.length / 3; t++) {
+                const trailPos = meteor.trail[t];
+                const trailAge = t / meteor.trail.length; // 0 = oldest, 1 = newest
+
+                positions[pointIndex * 3] = trailPos.x;
+                positions[pointIndex * 3 + 1] = trailPos.y;
+                positions[pointIndex * 3 + 2] = trailPos.z;
+
+                // Size decreases along trail
+                sizes[pointIndex] = meteor.size * trailAge * trailAge;
+
+                // Color fades along trail
+                colors[pointIndex * 3] = meteor.color.r * trailAge;
+                colors[pointIndex * 3 + 1] = meteor.color.g * trailAge;
+                colors[pointIndex * 3 + 2] = meteor.color.b * trailAge;
+
+                lifetimes[pointIndex] = meteor.life * trailAge;
+                maxLifetimes[pointIndex] = meteor.maxLife;
+
+                pointIndex++;
+            }
+
+            // Add bright head point
+            if (pointIndex < positions.length / 3) {
+                positions[pointIndex * 3] = meteor.position.x;
+                positions[pointIndex * 3 + 1] = meteor.position.y;
+                positions[pointIndex * 3 + 2] = meteor.position.z;
+                sizes[pointIndex] = meteor.size * 1.5;
+                colors[pointIndex * 3] = meteor.color.r;
+                colors[pointIndex * 3 + 1] = meteor.color.g;
+                colors[pointIndex * 3 + 2] = meteor.color.b;
+                lifetimes[pointIndex] = meteor.life;
+                maxLifetimes[pointIndex] = meteor.maxLife;
+                pointIndex++;
+            }
+        }
+
+        // Clear remaining points
+        for (let i = pointIndex; i < positions.length / 3; i++) {
+            positions[i * 3] = 0;
+            positions[i * 3 + 1] = -10000;
+            positions[i * 3 + 2] = 0;
+            sizes[i] = 0;
+        }
+
+        this.meteorPoints.geometry.attributes.position.needsUpdate = true;
+        this.meteorPoints.geometry.attributes.size.needsUpdate = true;
+        this.meteorPoints.geometry.attributes.meteorColor.needsUpdate = true;
+        this.meteorPoints.geometry.attributes.life.needsUpdate = true;
+        this.meteorPoints.geometry.attributes.maxLife.needsUpdate = true;
+    }
+
+    // ============================================================
+    // DEEP FIELD BACKGROUND GALAXIES
+    // ============================================================
+    createDeepFieldGalaxies() {
+        const count = 200; // 200 tiny background galaxies
+        const geometry = new THREE.BufferGeometry();
+
+        const positions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        const colors = new Float32Array(count * 3);
+        const types = new Float32Array(count);
+        const angles = new Float32Array(count);
+
+        // Color palettes for different galaxy types
+        const galaxyColors = [
+            new THREE.Color(0.9, 0.85, 0.7),   // Warm spiral
+            new THREE.Color(0.7, 0.75, 0.95),   // Blue spiral
+            new THREE.Color(1.0, 0.9, 0.6),     // Yellow elliptical
+            new THREE.Color(0.6, 0.7, 1.0),     // Blue irregular
+            new THREE.Color(0.95, 0.8, 0.75),   // Red elliptical
+            new THREE.Color(0.8, 0.9, 1.0),     // Pale blue
+        ];
+
+        for (let i = 0; i < count; i++) {
+            // Distribute on a very large sphere, avoiding the galactic plane
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+
+            // Push galaxies further out than background stars
+            const r = 1200 + Math.random() * 800;
+
+            positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            positions[i * 3 + 2] = r * Math.cos(phi);
+
+            // Size varies - some closer/larger, most small
+            sizes[i] = 5 + Math.pow(Math.random(), 2) * 25;
+
+            // Random color from palette
+            const colorIdx = Math.floor(Math.random() * galaxyColors.length);
+            const gc = galaxyColors[colorIdx];
+            const brightness = 0.3 + Math.random() * 0.5;
+            colors[i * 3] = gc.r * brightness;
+            colors[i * 3 + 1] = gc.g * brightness;
+            colors[i * 3 + 2] = gc.b * brightness;
+
+            // Galaxy type: 0-0.33 spiral, 0.33-0.66 elliptical, 0.66-1 irregular
+            types[i] = Math.random();
+
+            // Random orientation angle
+            angles[i] = Math.random() * Math.PI * 2;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        geometry.setAttribute('galaxyColor', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('galaxyType', new THREE.BufferAttribute(types, 1));
+        geometry.setAttribute('galaxyAngle', new THREE.BufferAttribute(angles, 1));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: this.uniforms.time
+            },
+            vertexShader: deepFieldVertexShader,
+            fragmentShader: deepFieldFragmentShader,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        this.deepFieldGalaxies = new THREE.Points(geometry, material);
+        this.scene.add(this.deepFieldGalaxies);
     }
 
     setupControls() {
@@ -3640,6 +4383,9 @@ export class MilkyWaySimulation {
 
         // Update planet view if active
         this.updatePlanetView(deltaTime);
+
+        // Update shooting stars
+        this.updateShootingStars(deltaTime);
 
         // Update controls (only if not in cinematic mode, tour mode, merger mode, or supernova mode)
         if (!this.cinematicState.active && !this.tourState.active && !this.planetViewState.active && !this.mergerState.active && !this.supernovaState.active) {
